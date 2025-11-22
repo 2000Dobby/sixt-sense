@@ -44,12 +44,12 @@ const MapUpdater = ({ userPos, carPos }: { userPos: [number, number], carPos: [n
 
 interface ParkingNavigatorProps {
     carLocation: { lat: number; lng: number };
+    userLocation: [number, number] | null;
+    errorMsg: string;
 }
 
-const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({ carLocation }) => {
-    const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({ carLocation, userLocation, errorMsg }) => {
     const [distance, setDistance] = useState<number | null>(null);
-    const [errorMsg, setErrorMsg] = useState<string>('');
 
     // Helper to calculate distance
     const updateDistance = (userLat: number, userLng: number) => {
@@ -61,33 +61,11 @@ const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({ carLocation }) => {
     };
 
     useEffect(() => {
-        if (!navigator.geolocation) {
-            setErrorMsg('Geolocation is not supported by your browser');
-            return;
-        }
-
-        // Watch Position options for high accuracy
-        const options = {
-            enableHighAccuracy: true, // Vital for walking navigation
-            timeout: 5000,
-            maximumAge: 0,
-        };
-
-        const success = (position: GeolocationPosition) => {
-            const { latitude, longitude } = position.coords;
-            setUserLocation([latitude, longitude]);
+        if (userLocation) {
+            const [latitude, longitude] = userLocation;
             updateDistance(latitude, longitude);
-        };
-
-        const error = (err: GeolocationPositionError) => {
-            setErrorMsg(`GPS Error: ${err.message}`);
-        };
-
-        const id = navigator.geolocation.watchPosition(success, error, options);
-
-        // Cleanup
-        return () => navigator.geolocation.clearWatch(id);
-    }, [carLocation]);
+        }
+    }, [userLocation, carLocation]);
 
     // Default view if no user location yet (centers on car)
     const center: [number, number] = [carLocation.lat, carLocation.lng];
