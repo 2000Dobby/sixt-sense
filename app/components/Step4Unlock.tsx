@@ -1,8 +1,14 @@
 import { motion } from "framer-motion";
-import { Car } from "lucide-react";
+import { Car as CarIcon } from "lucide-react";
 import UnlockSlider from "./UnlockSlider";
+import { Car } from "@/types";
 
-export default function Step4Unlock() {
+interface Step4UnlockProps {
+    car: Car;
+    onUnlock: () => void;
+}
+
+export default function Step4Unlock({ car, onUnlock }: Step4UnlockProps) {
     return (
         <motion.div
             key="step4-content"
@@ -16,13 +22,13 @@ export default function Step4Unlock() {
             </div>
 
             <div className="mb-12 text-center relative z-10">
-                <Car className="w-24 h-24 text-zinc-800 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-white mb-2">BMW 5 Series</h2>
-                <p className="text-sixt-orange font-medium">M-XY 1234</p>
+                <CarIcon className="w-24 h-24 text-zinc-800 mx-auto mb-4" />
+                <h2 className="text-3xl font-bold text-white mb-2">{car.model}</h2>
+                <p className="text-sixt-orange font-medium">{car.licensePlate}</p>
             </div>
             
             <div className="w-full relative z-10">
-                <UnlockSlider onUnlock={() => void 0} />
+                <UnlockSlider onUnlock={onUnlock} />
             </div>
         </motion.div>
     );

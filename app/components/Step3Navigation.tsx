@@ -24,13 +24,6 @@ export default function Step3Navigation({ onArrivedClick }: Step3NavigationProps
             </div>
             <h2 className="text-2xl font-bold mb-2">Head to Parking Row 4</h2>
             <p className="text-zinc-400 mb-8">Your vehicle is located in spot #423.</p>
-            
-            <button 
-                onClick={onArrivedClick}
-                className="px-8 py-4 bg-zinc-800 text-white rounded-full font-bold hover:bg-zinc-700 transition-colors border border-zinc-700"
-            >
-                Simulate: I am at the car
-            </button>
         </motion.div>
     );
 }

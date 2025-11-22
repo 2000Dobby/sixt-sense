@@ -2,7 +2,7 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ChevronRight, Unlock } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
-export default function UnlockSlider({ onUnlock }: { onUnlock: () => void }) {
+export default function UnlockSlider({ onUnlock, label = "Slide to unlock" }: { onUnlock: () => void; label?: string }) {
     const [unlocked, setUnlocked] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const [sliderWidth, setSliderWidth] = useState(0);
@@ -65,7 +65,7 @@ export default function UnlockSlider({ onUnlock }: { onUnlock: () => void }) {
                 style={{ opacity: textOpacity }}
                 className="absolute inset-0 flex items-center justify-center text-zinc-500 font-medium pointer-events-none"
             >
-                Slide to unlock
+                {label}
             </motion.div>
 
             <motion.div
