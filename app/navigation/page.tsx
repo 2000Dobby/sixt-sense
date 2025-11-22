@@ -12,8 +12,8 @@ const ParkingNavigator = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="w-full h-[500px] bg-gray-100 animate-pulse rounded-xl flex items-center justify-center text-gray-400">
-                Initializing GPS...
+            <div className="w-full h-[30vh] bg-gray-800 animate-pulse rounded-xl overflow-hidden shadow-lg border-gray-700 flex items-center justify-center text-gray-400">
+                Loading Map...
             </div>
         )
     }
