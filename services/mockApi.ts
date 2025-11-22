@@ -6,7 +6,6 @@ const MOCK_BOOKED_CAR: Car = {
     licensePlate: "M-XY 1234",
     image: "/cars/bmw3.png",
     category: "Sedan",
-    transmission: "Automatic",
     features: ["Bluetooth", "Navigation", "Heated Seats"],
     spot: "Spot: #123"
 };
@@ -17,7 +16,6 @@ const MOCK_UPGRADE_CAR: Car = {
     licensePlate: "M-AB 9876",
     image: "/cars/bmw5.png",
     category: "Luxury Class",
-    transmission: "Automatic",
     features: ["More legroom & comfort", "Premium sound system", "Heads-up display included"],
     spot: "Spot: #423"
 };
@@ -47,9 +45,10 @@ export const mockOffers = {
 };
 
 export const mockApi = {
-    fetchBookingDetails: async (): Promise<{ bookedCar: Car; offer: UpgradeOffer }> => {
+    fetchBookingDetails: async (): Promise<{ bookingId: string; bookedCar: Car; offer: UpgradeOffer }> => {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
         return {
+            bookingId: "987654321",
             bookedCar: MOCK_BOOKED_CAR,
             offer: MOCK_OFFER_CAR
         };

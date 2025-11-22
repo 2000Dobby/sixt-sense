@@ -4,12 +4,11 @@ export interface Car {
     licensePlate: string;
     image: string; // URL or placeholder
     category: string; // e.g., "Sedan", "Luxury"
-    transmission: string; // "Automatic", "Manual"
     features: string[];
     spot?: string;
 }
 
-export type OfferType = 'CAR_UPGRADE' | 'PROTECTION' | 'BUNDLE';
+export type OfferType = 'CAR_UPGRADE' | 'PROTECTION';
 
 export interface UpgradeOffer {
     id: string;
@@ -22,6 +21,7 @@ export interface UpgradeOffer {
 }
 
 export interface BookingState {
+    bookingId: string | null;
     step: number;
     bookedCar: Car | null;
     assignedCar: Car | null; // The car the user will actually get (could be upgrade)

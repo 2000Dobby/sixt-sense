@@ -22,6 +22,7 @@ const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
 export function BookingProvider({ children }: { children: ReactNode }) {
     const [state, setState] = useState<BookingState>({
+        bookingId: null,
         step: 1,
         bookedCar: null,
         assignedCar: null,
@@ -52,9 +53,10 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     const loadBooking = async () => {
         setState(prev => ({ ...prev, isLoading: true }));
         try {
-            const { bookedCar, offer } = await mockApi.fetchBookingDetails();
+            const { bookingId, bookedCar, offer } = await mockApi.fetchBookingDetails();
             setState(prev => ({
                 ...prev,
+                bookingId,
                 bookedCar,
                 assignedCar: bookedCar, // Initially assigned the booked car
                 availableOffer: offer,
