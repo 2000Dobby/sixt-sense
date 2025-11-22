@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { getDistance } from 'geolib';
+import { useState, useEffect, useRef } from 'react';
 
 import HeadingArrow from './_components/heading-arrow';
 import { useLocation } from './_hooks/use-location';
@@ -21,6 +22,11 @@ const ParkingNavigator = dynamic(
 
 
 export default function Navigation() {
+    const [isMapLoaded, setIsMapLoaded] = useState(false);
+    const [isNearCar, setIsNearCar] = useState(false);
+    const hasNotifiedRef = useRef(false);
+    const PROXIMITY_THRESHOLD = 10; // meters
+    
     const targetPosition = { lat: 48.263224370022066, lng: 11.6702772006254 };
     const { userLocation, errorMsg } = useLocation();
 
@@ -41,17 +47,46 @@ export default function Navigation() {
         )
         : null;
 
+    // Proximity detection effect
+    useEffect(() => {
+        if (distance !== null && distance <= PROXIMITY_THRESHOLD) {
+            setIsNearCar(true);
+
+            if (!hasNotifiedRef.current) {
+                hasNotifiedRef.current = true;
+
+                window.dispatchEvent(new CustomEvent('carProximityReached', { 
+                    detail: { distance, location: userLocation } 
+                }));
+            }
+        } else if (distance !== null && distance > PROXIMITY_THRESHOLD + 5) {
+            setIsNearCar(false);
+            hasNotifiedRef.current = false;
+        }
+    }, [distance, userLocation]);
+
     return (
         <div className="max-w-11/12 m-auto">
             <h1 className="text-4xl font-bold" style={{ color: "#FF5F00" }}>Head to your car</h1>
             {errorMsg && (
                 <p className="text-red-500 text-center mt-2">{errorMsg}</p>
             )}
-            <HeadingArrow targetAngle={targetAngle} distance={distance} />
+
+            {/* Proximity Alert */}
+            {isNearCar && (
+                <div className="mt-4 p-4 bg-green-600 text-white rounded-lg shadow-lg text-center animate-pulse">
+                    <p className="text-2xl font-bold">🎉 You&apos;ve arrived!</p>
+                    <p className="text-sm mt-1">You are within {PROXIMITY_THRESHOLD} meters of your car</p>
+                </div>
+            )}
+            
+            {isMapLoaded && <HeadingArrow targetAngle={targetAngle} distance={distance} />}
             <div style={{ marginTop: '20px' }}>
                 <ParkingNavigator
                     carLocation={targetPosition}
                     userLocation={userLocation}
+                    onLoad={() => setIsMapLoaded(true)}
+                    isNearCar={isNearCar}
                 />
             </div>
         </div>

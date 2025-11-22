@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -41,12 +41,29 @@ const MapUpdater = ({ userPos, carPos }: { userPos: [number, number], carPos: [n
     return null;
 };
 
+// --- Helper Component: Map Ready Handler ---
+const MapReadyHandler = ({ onLoad }: { onLoad?: () => void }) => {
+    const map = useMap();
+
+    useEffect(() => {
+        if (onLoad) {
+            map.whenReady(() => {
+                onLoad();
+            });
+        }
+    }, [map, onLoad]);
+
+    return null;
+};
+
 interface ParkingNavigatorProps {
     carLocation: { lat: number; lng: number };
     userLocation: [number, number] | null;
+    onLoad?: () => void;
+    isNearCar?: boolean;
 }
 
-const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({ carLocation, userLocation }) => {
+const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({ carLocation, userLocation, onLoad, isNearCar = false }) => {
     // Default view if no user location yet (centers on car)
     const center: [number, number] = [carLocation.lat, carLocation.lng];
 
@@ -63,10 +80,25 @@ const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({ carLocation, userLo
                 zoomControl={false}
                 dragging={false}
             >
+                <MapReadyHandler onLoad={onLoad} />
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                     url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
                 />
+
+                {/* Proximity Circle - shown when near car */}
+                {isNearCar && (
+                    <Circle
+                        center={[carLocation.lat, carLocation.lng]}
+                        radius={10}
+                        pathOptions={{
+                            color: '#00FF00',
+                            fillColor: '#00FF00',
+                            fillOpacity: 0.2,
+                            weight: 2
+                        }}
+                    />
+                )}
 
                 {/* Car Marker */}
                 <Marker position={[carLocation.lat, carLocation.lng]} icon={carIcon}>
