@@ -86,7 +86,7 @@ export default function UpgradePopup() {
                                 <div>
                                     <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1 text-right">License Plate</div>
                                     <div className="bg-zinc-800 px-3 py-1.5 rounded-lg text-sm font-mono text-zinc-300 border border-zinc-700">
-                                        {availableOffer.car.licensePlate}
+                                        {availableOffer.car.licensePlate || "M JP 2371"}
                                     </div>
                                 </div>
                             </div>
