@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
-import { Navigation } from "lucide-react";
+import { Navigation as NavigationIcon } from "lucide-react";
 import { Car } from "@/types";
 
-interface Step3NavigationProps {
+interface NavigationProps {
     car: Car;
 }
 
-export default function Step3Navigation({ car }: Step3NavigationProps) {
+export default function Navigation({ car }: NavigationProps) {
     // Extract spot number from string like "Spot: #123"
     const spotString = car.spot || "123";
     const spotNumber = spotString.replace(/[^0-9]/g, '');
@@ -28,7 +28,7 @@ export default function Step3Navigation({ car }: Step3NavigationProps) {
                      
                      {/* Inner Circle */}
                      <div className="w-32 h-32 rounded-full border border-zinc-700/50 flex flex-col items-center justify-center relative">
-                        <Navigation className="w-6 h-6 text-sixt-orange mb-1" />
+                        <NavigationIcon className="w-6 h-6 text-sixt-orange mb-1" />
                         <div className="text-3xl font-bold text-white tracking-tighter">150<span className="text-sm text-zinc-500 font-normal ml-1">m</span></div>
                      </div>
                 </div>

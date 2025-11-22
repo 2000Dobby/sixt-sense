@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 import { Car as CarIcon, ShieldCheck, ArrowRight, Shield } from "lucide-react";
 import { Car, UpgradeOffer } from "@/types";
-import UnlockSlider from "./UnlockSlider";
+import UnlockSlider from "./misc/UnlockSlider";
 import { useBooking } from "@/context/BookingContext";
 
-interface Step2VehicleSelectionProps {
+interface VehicleSelectionProps {
     currentCar: Car;
     offer: UpgradeOffer;
     onUpgradeClick: () => void;
@@ -12,13 +12,13 @@ interface Step2VehicleSelectionProps {
     upgradeDistance?: string;
 }
 
-export default function Step2VehicleSelection({ 
+export default function VehicleSelection({ 
     currentCar, 
     offer, 
     onUpgradeClick, 
     distance = "350m",
     upgradeDistance = "150m"
-}: Step2VehicleSelectionProps) {
+}: VehicleSelectionProps) {
     const { isLoading } = useBooking();
     const isProtectionOnly = offer.type === 'PROTECTION';
     const hasCar = offer.type === 'CAR_UPGRADE';

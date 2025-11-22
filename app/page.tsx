@@ -1,12 +1,12 @@
 "use client";
 
 import { AnimatePresence } from "framer-motion";
-import Header from "./components/Header";
-import Step2VehicleSelection from "./components/Step2VehicleSelection";
-import Step3Navigation from "./components/Step3Navigation";
+import Header from "./components/misc/Header";
+import VehicleSelection from "./components/VehicleSelection";
+import Navigation from "./components/Navigation";
 import SuccessScreen from "./components/SuccessScreen";
-import PickupButton from "./components/PickupButton";
-import ActionPopup from "./components/ActionPopup";
+import PickupButton from "./components/misc/PickupButton";
+import ActionPopup from "./components/misc/ActionPopup";
 import { useBooking } from "@/context/BookingContext";
 
 export default function Home() {
@@ -30,7 +30,7 @@ export default function Home() {
       <div className="flex-1 w-full max-w-md flex flex-col relative px-4 pb-4">
         <AnimatePresence mode="wait">
             {step === 2 && bookedCar && availableOffer && (
-                <Step2VehicleSelection 
+                <VehicleSelection 
                     currentCar={bookedCar} 
                     offer={availableOffer}
                     onUpgradeClick={handleUpgradeClick} 
@@ -47,7 +47,7 @@ export default function Home() {
             )}
 
             {step === 3 && assignedCar && (
-                <Step3Navigation car={assignedCar} />
+                <Navigation car={assignedCar} />
             )}
 
             {step === 5 && (

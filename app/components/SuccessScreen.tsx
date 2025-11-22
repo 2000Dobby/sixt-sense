@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Check, Car } from "lucide-react";
-import CircularTimer from "./CircularTimer";
+import CircularTimer from "./misc/CircularTimer";
 
 interface SuccessScreenProps {
     title: string;
