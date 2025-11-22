@@ -346,9 +346,13 @@ export async function getPersonaForBooking(bookingOrId: Booking | string, forceP
   // 1. Check if a specific persona was requested
   if (forcePersonaId) {
     selectedPersona = PERSONAS.find(p => p.id === forcePersonaId);
+    if (!selectedPersona) {
+      console.warn(`Requested persona ID "${forcePersonaId}" not found. Falling back to default.`);
+      selectedPersona = PERSONAS[0];
+    }
   }
 
-  // 2. If no forced persona or not found, try heuristics
+  // 2. If no forced persona (and thus no selectedPersona yet), try heuristics
   if (!selectedPersona) {
     // Try to infer from booking details if available
     // Note: 'start' and 'end' are not strictly typed in the base Booking interface but might exist in the API response

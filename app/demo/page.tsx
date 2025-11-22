@@ -13,14 +13,15 @@ function getVehicleDisplayName(vehicle: Vehicle): string {
   );
 }
 
-export default async function DemoPage({ searchParams }: { searchParams: { persona?: string; vehicle?: string } }) {
+export default async function DemoPage({ searchParams }: { searchParams: Promise<{ persona?: string; vehicle?: string }> }) {
   // 1. Create a fresh demo booking
   const booking = await dataSource.createBooking();
   const bookingId = booking.id;
   
   // Get optional params
-  const selectedPersonaId = searchParams.persona;
-  const selectedVehicleId = searchParams.vehicle;
+  const resolvedSearchParams = await searchParams;
+  const selectedPersonaId = resolvedSearchParams.persona;
+  const selectedVehicleId = resolvedSearchParams.vehicle;
 
   // Get available vehicles for selector
   const availableVehicles = await dataSource.getAvailableVehicles(bookingId);
