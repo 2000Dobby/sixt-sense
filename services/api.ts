@@ -18,7 +18,7 @@ export const api = {
         const mapToCar = (vehicle: any): Car => ({
             id: vehicle.id,
             model: `${vehicle.brand} ${vehicle.model}`,
-            licensePlate: "M-XY " + Math.floor(1000 + Math.random() * 9000), // Placeholder as API doesn't return license plate
+            licensePlate: "M JP 2371",
             image: vehicle.images?.[0] || "/images/default-car.png",
             category: vehicle.groupType || vehicle.acrissCode || "Standard",
             features: vehicle.attributes?.map((a: any) => a.title) || [],

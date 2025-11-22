@@ -9,8 +9,9 @@ interface NavigationProps {
 export default function Navigation({ car }: NavigationProps) {
     // Extract spot number from string like "Spot: #123"
     const spotString = car.spot || "123";
-    const spotNumber = spotString.replace(/[^0-9]/g, '');
-    const parkingRow = spotNumber.charAt(0);
+    const spotNumberMatch = spotString.match(/\d+/);
+    const spotNumber = spotNumberMatch ? spotNumberMatch[0] : "---";
+    const parkingRow = spotNumber.length > 0 ? spotNumber.charAt(0) : "?";
 
     return (
         <motion.div
