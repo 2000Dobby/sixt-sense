@@ -28,9 +28,18 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         availableOffer: null,
         isUnlocked: false,
         isLoading: false,
+        hasUpgraded: false
     });
 
     const [popupState, setPopupState] = useState<'UPGRADE' | 'UNLOCK' | null>(null);
+
+    const openPopup = (type: 'UPGRADE' | 'UNLOCK') => {
+        // If user already upgraded, prevent opening the upgrade popup
+        if (type === 'UPGRADE' && state.hasUpgraded) {
+            return;
+        }
+        setPopupState(type);
+    };
 
     const setStep = (step: number) => {
         setState(prev => ({ ...prev, step }));
@@ -68,7 +77,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
                     ...prev,
                     assignedCar: state.availableOffer!.car!, // Assign the upgrade car
                     isLoading: false,
-                    step: 6 // Move to Upgrade Success Step
+                    step: 6, // Move to Upgrade Success Step
+                    hasUpgraded: true
                 }));
             }
         } catch (error) {
@@ -109,7 +119,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             ...prev,
             step: 1,
             assignedCar: prev.bookedCar, // Reset to original car
-            isUnlocked: false
+            isUnlocked: false,
+            hasUpgraded: false
         }));
         setPopupState(null);
     };
@@ -128,7 +139,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             rejectUpgrade, 
             unlockCar,
             popupState,
-            openPopup: (type) => setPopupState(type),
+            openPopup,
             closePopup: () => setPopupState(null),
             resetFlow,
             setDebugOffer

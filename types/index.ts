@@ -29,4 +29,5 @@ export interface BookingState {
     isUnlocked: boolean;
     isLoading: boolean;
     successMessage?: string;
+    hasUpgraded: boolean;
 }
