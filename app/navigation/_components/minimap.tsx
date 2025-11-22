@@ -5,6 +5,18 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+// --- Types ---
+export interface Waypoint {
+    id: string;
+    lat: number;
+    lng: number;
+    label: string;
+    isHiddenPOI?: boolean; // Hidden Point of Interest
+    poiType?: string; // Type of POI (e.g., 'elevator', 'stairs', 'landmark')
+    proximityRadius?: number; // Radius in meters for triggering (default: 5)
+    isReached?: boolean; // Track if waypoint has been reached
+}
+
 // --- Configuration ---
 // Custom Icons to avoid Next.js/Leaflet asset loading issues
 const createIcon = (color: string, className: string = '') => {
@@ -24,6 +36,7 @@ const userIcon = L.divIcon({
 });
 
 const carIcon = createIcon('#FF5F00'); // Sixt Orange dot for car
+
 
 // --- Helper Component: Auto-Center Map ---
 // Keeps the map bounds containing both user and car
@@ -61,9 +74,77 @@ interface ParkingNavigatorProps {
     userLocation: [number, number] | null;
     onLoad?: () => void;
     isNearCar?: boolean;
+    waypoints?: Waypoint[];
+    onWaypointReached?: (waypoint: Waypoint) => void;
+    onHiddenPOIDiscovered?: (waypoint: Waypoint) => void;
 }
 
-const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({ carLocation, userLocation, onLoad, isNearCar = false }) => {
+const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({
+    carLocation,
+    userLocation,
+    onLoad,
+    isNearCar = false,
+    waypoints = [],
+    onWaypointReached,
+    onHiddenPOIDiscovered
+}) => {
+    const notifiedWaypoints = React.useRef<Set<string>>(new Set());
+
+    // Waypoint proximity detection
+    React.useEffect(() => {
+        if (!userLocation || waypoints.length === 0) return;
+
+        waypoints.forEach((waypoint) => {
+            if (waypoint.isReached || notifiedWaypoints.current.has(waypoint.id)) return;
+
+            // Calculate distance in meters using Haversine formula
+            const R = 6371e3; // Earth's radius in meters
+            const lat1Rad = (userLocation[0] * Math.PI) / 180;
+            const lat2Rad = (waypoint.lat * Math.PI) / 180;
+            const deltaLat = ((waypoint.lat - userLocation[0]) * Math.PI) / 180;
+            const deltaLng = ((waypoint.lng - userLocation[1]) * Math.PI) / 180;
+
+            const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+                Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c;
+
+            const proximityThreshold = waypoint.proximityRadius || 5;
+
+            if (distance <= proximityThreshold) {
+                notifiedWaypoints.current.add(waypoint.id);
+
+                // Trigger appropriate event
+                if (waypoint.isHiddenPOI) {
+                    // Dispatch custom event for hidden POI discovery
+                    window.dispatchEvent(new CustomEvent('hiddenPOIDiscovered', {
+                        detail: {
+                            waypoint,
+                            distance,
+                            userLocation,
+                            timestamp: new Date().toISOString()
+                        }
+                    }));
+
+                    onHiddenPOIDiscovered?.(waypoint);
+                } else {
+                    // Dispatch custom event for regular waypoint
+                    window.dispatchEvent(new CustomEvent('waypointReached', {
+                        detail: {
+                            waypoint,
+                            distance,
+                            userLocation,
+                            timestamp: new Date().toISOString()
+                        }
+                    }));
+
+                    onWaypointReached?.(waypoint);
+                }
+            }
+        });
+    }, [userLocation, waypoints, onWaypointReached, onHiddenPOIDiscovered]);
+
     // Default view if no user location yet (centers on car)
     const center: [number, number] = [carLocation.lat, carLocation.lng];
 
@@ -105,6 +186,8 @@ const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({ carLocation, userLo
                     <Popup>Your Car is here 🚗</Popup>
                 </Marker>
 
+                {/* Waypoints are invisible - only used for navigation path calculation */}
+
                 {/* User Marker (Real-time) */}
                 {userLocation && (
                     <>
@@ -112,11 +195,32 @@ const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({ carLocation, userLo
                             <Popup>You are here</Popup>
                         </Marker>
 
-                        {/* Line connecting user to car */}
-                        <Polyline
-                            positions={[userLocation, [carLocation.lat, carLocation.lng]]}
-                            pathOptions={{ color: '#FF5F00', dashArray: '10, 10', opacity: 0.8 }}
-                        />
+                        {/* Waypoint path - connect only unreached waypoints in order */}
+                        {waypoints.length > 0 && (
+                            <Polyline
+                                positions={[
+                                    userLocation,
+                                    ...waypoints
+                                        .filter(wp => !wp.isReached)
+                                        .map(wp => [wp.lat, wp.lng] as [number, number]),
+                                    [carLocation.lat, carLocation.lng]
+                                ]}
+                                pathOptions={{
+                                    color: '#3B82F6',
+                                    dashArray: '5, 10',
+                                    opacity: 0.6,
+                                    weight: 3
+                                }}
+                            />
+                        )}
+
+                        {/* Line connecting user to car (shown if no waypoints) */}
+                        {waypoints.length === 0 && (
+                            <Polyline
+                                positions={[userLocation, [carLocation.lat, carLocation.lng]]}
+                                pathOptions={{ color: '#FF5F00', dashArray: '10, 10', opacity: 0.8 }}
+                            />
+                        )}
 
                         {/* Auto-zoom logic */}
                         <MapUpdater userPos={userLocation} carPos={[carLocation.lat, carLocation.lng]} />
