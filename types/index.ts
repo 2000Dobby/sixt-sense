@@ -6,6 +6,7 @@ export interface Car {
     category: string; // e.g., "Sedan", "Luxury"
     transmission: string; // "Automatic", "Manual"
     features: string[];
+    spot?: string;
 }
 
 export type OfferType = 'CAR_UPGRADE' | 'PROTECTION' | 'BUNDLE';

@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useBooking } from "@/context/BookingContext";
-import { MapPin, RotateCcw } from "lucide-react";
+import { MapPin, RotateCcw, Package, Shield, Car } from "lucide-react";
+import { mockOffers } from "@/services/mockApi";
 import clsx from "clsx";
 
 export default function DebugOverlay() {
     const [isVisible, setIsVisible] = useState(false);
-    const { step, setStep, openUpgradePopup, resetFlow } = useBooking();
+    const { step, setStep, openUpgradePopup, resetFlow, setDebugOffer } = useBooking();
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -32,6 +33,21 @@ export default function DebugOverlay() {
                         >
                             <RotateCcw className="w-4 h-4" /> Reset App
                         </button>
+
+                        {step === 2 && (
+                            <>
+                                <div className="h-px bg-gray-700 my-2" />
+                                <div className="font-bold text-gray-400 mb-2 uppercase text-xs tracking-wider">Set Offer Type</div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button onClick={() => setDebugOffer(mockOffers.car)} className="p-2 bg-zinc-800 rounded hover:bg-zinc-700 flex flex-col items-center gap-1 text-[10px] text-zinc-400">
+                                        <Car className="w-4 h-4" /> Car
+                                    </button>
+                                    <button onClick={() => setDebugOffer(mockOffers.protection)} className="p-2 bg-zinc-800 rounded hover:bg-zinc-700 flex flex-col items-center gap-1 text-[10px] text-zinc-400">
+                                        <Shield className="w-4 h-4" /> Prot
+                                    </button>
+                                </div>
+                            </>
+                        )}
 
                         {step === 3 && (
                             <>

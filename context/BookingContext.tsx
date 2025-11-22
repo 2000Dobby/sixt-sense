@@ -15,6 +15,7 @@ interface BookingContextType extends BookingState {
     openUpgradePopup: () => void;
     closeUpgradePopup: () => void;
     resetFlow: () => void;
+    setDebugOffer: (offer: UpgradeOffer) => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -33,6 +34,10 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
     const setStep = (step: number) => {
         setState(prev => ({ ...prev, step }));
+    };
+
+    const setDebugOffer = (offer: UpgradeOffer) => {
+        setState(prev => ({ ...prev, availableOffer: offer }));
     };
 
     const loadBooking = async () => {
@@ -124,7 +129,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             isUpgradePopupOpen,
             openUpgradePopup: () => setIsUpgradePopupOpen(true),
             closeUpgradePopup: () => setIsUpgradePopupOpen(false),
-            resetFlow
+            resetFlow,
+            setDebugOffer
         }}>
             {children}
         </BookingContext.Provider>

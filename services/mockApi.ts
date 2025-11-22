@@ -7,7 +7,8 @@ const MOCK_BOOKED_CAR: Car = {
     image: "/cars/bmw3.png",
     category: "Sedan",
     transmission: "Automatic",
-    features: ["Bluetooth", "Navigation", "Heated Seats"]
+    features: ["Bluetooth", "Navigation", "Heated Seats"],
+    spot: "Spot: #123"
 };
 
 const MOCK_UPGRADE_CAR: Car = {
@@ -17,17 +18,32 @@ const MOCK_UPGRADE_CAR: Car = {
     image: "/cars/bmw5.png",
     category: "Luxury Class",
     transmission: "Automatic",
-    features: ["More legroom & comfort", "Premium sound system", "Heads-up display included"]
+    features: ["More legroom & comfort", "Premium sound system", "Heads-up display included"],
+    spot: "Spot: #423"
 };
 
-const MOCK_OFFER: UpgradeOffer = {
+const MOCK_OFFER_CAR: UpgradeOffer = {
     id: "o1",
     type: "CAR_UPGRADE",
-    title: "Special Offer",
+    title: "Vehicle Upgrade",
     description: "Upgrade to Luxury Class",
     price: 15,
     car: MOCK_UPGRADE_CAR,
-    benefits: MOCK_UPGRADE_CAR.features
+    benefits: ["More legroom", "Premium Sound", "Heads-up Display"]
+};
+
+const MOCK_OFFER_PROTECTION: UpgradeOffer = {
+    id: "o2",
+    type: "PROTECTION",
+    title: "Peace of Mind",
+    description: "Full Protection Package",
+    price: 10,
+    benefits: ["0€ Deductible", "Tire & Glass Protection", "Personal Accident Protection"]
+};
+
+export const mockOffers = {
+    car: MOCK_OFFER_CAR,
+    protection: MOCK_OFFER_PROTECTION
 };
 
 export const mockApi = {
@@ -35,7 +51,7 @@ export const mockApi = {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
         return {
             bookedCar: MOCK_BOOKED_CAR,
-            offer: MOCK_OFFER
+            offer: MOCK_OFFER_CAR
         };
     },
     
