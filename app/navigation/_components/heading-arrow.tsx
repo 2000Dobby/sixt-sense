@@ -23,7 +23,7 @@ const ArrowSVG = ({ rotation = 0 }: { rotation: number }) => (
   </svg>
 );
 
-export default function HeadingArrow({ targetAngle = 0 }: { targetAngle?: number }) {
+export default function HeadingArrow({ targetAngle = 0, distance = null }: { targetAngle?: number; distance?: number | null }) {
   const { orientation: heading, error, permissionState, requestPermission } = useDeviceOrientation();
   const [rotation, setRotation] = useState(0);
   const rotationRef = React.useRef(0);
@@ -99,10 +99,11 @@ export default function HeadingArrow({ targetAngle = 0 }: { targetAngle?: number
       {heading !== null ? (
         <>
           <ArrowSVG rotation={rotation} />
-          <div style={{ marginTop: 10, color: SIXT_DARK, fontWeight: 600 }}>
-            Heading: {heading.toFixed(0)}°<br />
-            Arrow points to: {targetAngle}°
-          </div>
+          {distance !== null && (
+            <div style={{ marginTop: 10, fontSize: '1.5rem', fontWeight: 700, color: SIXT_ORANGE }}>
+              {distance} meters
+            </div>
+          )}
         </>
       ) : (
         <div style={{ color: SIXT_ORANGE, fontSize: "5rem" }}>{error || '...'}</div>

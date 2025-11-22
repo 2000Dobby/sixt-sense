@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { getDistance } from 'geolib'; // Helpful for calculating distance
 import 'leaflet/dist/leaflet.css';
 
 // --- Configuration ---
@@ -45,48 +44,15 @@ const MapUpdater = ({ userPos, carPos }: { userPos: [number, number], carPos: [n
 interface ParkingNavigatorProps {
     carLocation: { lat: number; lng: number };
     userLocation: [number, number] | null;
-    errorMsg: string;
 }
 
-const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({ carLocation, userLocation, errorMsg }) => {
-    const [distance, setDistance] = useState<number | null>(null);
-
-    // Helper to calculate distance
-    const updateDistance = (userLat: number, userLng: number) => {
-        const dist = getDistance(
-            { latitude: userLat, longitude: userLng },
-            { latitude: carLocation.lat, longitude: carLocation.lng }
-        );
-        setDistance(dist);
-    };
-
-    useEffect(() => {
-        if (userLocation) {
-            const [latitude, longitude] = userLocation;
-            updateDistance(latitude, longitude);
-        }
-    }, [userLocation, carLocation]);
-
+const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({ carLocation, userLocation }) => {
     // Default view if no user location yet (centers on car)
     const center: [number, number] = [carLocation.lat, carLocation.lng];
 
     return (
         <div className="w-full h-[30vh] relative rounded-xl overflow-hidden shadow-lg border-gray-700">
 
-            {/* --- Floating Info Panel --- */}
-            <div className="absolute top-4 left-4 z-[1000] bg-black/80 backdrop-blur-sm p-4 rounded-lg shadow-md max-w-xs">
-                <h3 className="font-bold text-white">Find My Car</h3>
-                {errorMsg ? (
-                    <p className="text-red-400 text-sm">{errorMsg}</p>
-                ) : (
-                    <div className="mt-2">
-                        <p className="text-sm text-gray-300">Distance remaining:</p>
-                        <p className="text-2xl font-bold text-[#FF5F00]">
-                            {distance !== null ? `${distance} meters` : 'Locating...'}
-                        </p>
-                    </div>
-                )}
-            </div>
 
             {/* --- Map --- */}
             <MapContainer
