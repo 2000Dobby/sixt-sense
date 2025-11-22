@@ -5,6 +5,7 @@ import Header from "./components/Header";
 import Step2VehicleSelection from "./components/Step2VehicleSelection";
 import Step3Navigation from "./components/Step3Navigation";
 import Step4Unlock from "./components/Step4Unlock";
+import Step5Success from "./components/Step5Success";
 import PickupButton from "./components/PickupButton";
 import UpgradePopup from "./components/UpgradePopup";
 import { useBooking } from "@/context/BookingContext";
@@ -47,6 +48,8 @@ export default function Home() {
             {step === 4 && assignedCar && (
                 <Step4Unlock car={assignedCar} onUnlock={unlockCar} />
             )}
+
+            {step === 5 && <Step5Success />}
         </AnimatePresence>
       </div>
 

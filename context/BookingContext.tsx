@@ -9,7 +9,7 @@ interface BookingContextType extends BookingState {
     loadBooking: () => Promise<void>;
     acceptUpgrade: () => Promise<void>;
     rejectUpgrade: () => void;
-    unlockCar: () => Promise<void>;
+    unlockCar: (carOverride?: Car) => Promise<void>;
     // New Navigation/Debug functions
     isUpgradePopupOpen: boolean;
     openUpgradePopup: () => void;
@@ -77,19 +77,20 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         setStep(3);
     };
 
-    const unlockCar = async () => {
-        if (!state.assignedCar) return;
+    const unlockCar = async (carOverride?: Car) => {
+        const carToUnlock = carOverride || state.assignedCar;
+        if (!carToUnlock) return;
 
         setState(prev => ({ ...prev, isLoading: true }));
         try {
-            const success = await mockApi.postUnlock(state.assignedCar.id);
+            const success = await mockApi.postUnlock(carToUnlock.id);
             if (success) {
                 setState(prev => ({
                     ...prev,
                     isUnlocked: true,
-                    isLoading: false
+                    isLoading: false,
+                    step: 5
                 }));
-                alert("Car Unlocked via API!");
             }
         } catch (error) {
             console.error("Failed to unlock", error);

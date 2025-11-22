@@ -4,12 +4,14 @@ import { useBooking } from "@/context/BookingContext";
 import UnlockSlider from "./UnlockSlider";
 
 export default function UpgradePopup() {
-    const { isUpgradePopupOpen, closeUpgradePopup, availableOffer, acceptUpgrade, setStep } = useBooking();
+    const { isUpgradePopupOpen, closeUpgradePopup, availableOffer, acceptUpgrade, unlockCar } = useBooking();
 
     const handleSwipeToUpgrade = async () => {
-        await acceptUpgrade();
-        closeUpgradePopup();
-        setStep(4); // Go to unlock screen with new car
+        if (availableOffer?.car) {
+            await acceptUpgrade();
+            await unlockCar(availableOffer.car);
+            closeUpgradePopup();
+        }
     };
 
     return (
