@@ -4,14 +4,13 @@ import { AnimatePresence } from "framer-motion";
 import Header from "./components/Header";
 import Step2VehicleSelection from "./components/Step2VehicleSelection";
 import Step3Navigation from "./components/Step3Navigation";
-import Step5Success from "./components/Step5Success";
-import StepUpgradeSuccess from "./components/StepUpgradeSuccess";
+import SuccessScreen from "./components/SuccessScreen";
 import PickupButton from "./components/PickupButton";
 import ActionPopup from "./components/ActionPopup";
 import { useBooking } from "@/context/BookingContext";
 
 export default function Home() {
-  const { step, setStep, bookedCar, availableOffer, assignedCar, acceptUpgrade, rejectUpgrade, openPopup } = useBooking();
+  const { step, setStep, bookedCar, availableOffer, assignedCar, acceptUpgrade, rejectUpgrade, openPopup, successMessage, resetFlow } = useBooking();
 
   const handlePickupClick = () => {
     if (step === 1) setStep(2);
@@ -39,14 +38,27 @@ export default function Home() {
             )}
 
             {step === 6 && (
-                <StepUpgradeSuccess />
+                <SuccessScreen 
+                    key="upgrade-success"
+                    title="You have successfully upgraded to a better car"
+                    duration={3000}
+                    onComplete={() => setStep(3)}
+                />
             )}
 
             {step === 3 && assignedCar && (
                 <Step3Navigation car={assignedCar} />
             )}
 
-            {step === 5 && <Step5Success />}
+            {step === 5 && (
+                <SuccessScreen 
+                    key="unlock-success"
+                    title={successMessage || "Car Unlocked!"}
+                    subtitle="Drive safe, see you soon."
+                    duration={10000}
+                    onComplete={resetFlow}
+                />
+            )}
         </AnimatePresence>
       </div>
 

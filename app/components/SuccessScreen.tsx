@@ -1,14 +1,17 @@
 import { motion } from "framer-motion";
 import { Check, Car } from "lucide-react";
-import { useBooking } from "@/context/BookingContext";
 import CircularTimer from "./CircularTimer";
 
-export default function Step5Success() {
-    const { successMessage, resetFlow } = useBooking();
+interface SuccessScreenProps {
+    title: string;
+    subtitle?: string;
+    duration: number;
+    onComplete: () => void;
+}
 
+export default function SuccessScreen({ title, subtitle, duration, onComplete }: SuccessScreenProps) {
     return (
         <motion.div
-            key="step5-content"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
@@ -44,21 +47,23 @@ export default function Step5Success() {
                 transition={{ delay: 0.6 }}
                 className="text-3xl font-bold mb-4 text-white"
             >
-                {successMessage || "Car Unlocked!"}
+                {title}
             </motion.h2>
             
-            <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-                className="text-xl text-zinc-400"
-            >
-                Drive safe, see you soon.
-            </motion.p>
+            {subtitle && (
+                <motion.p 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 }}
+                    className="text-xl text-zinc-400"
+                >
+                    {subtitle}
+                </motion.p>
+            )}
 
             <CircularTimer 
-                duration={10000} 
-                onComplete={resetFlow} 
+                duration={duration} 
+                onComplete={onComplete} 
             />
         </motion.div>
     );
