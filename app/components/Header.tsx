@@ -5,7 +5,7 @@ interface HeaderProps {
 export default function Header({ step }: HeaderProps) {
     return (
         <div className="w-full p-4 flex justify-between items-center z-10">
-            <div className="text-sixt-orange font-bold text-2xl tracking-tighter">SIXT</div>
+            <div className="text-sixt-orange font-bold text-2xl tracking-tighter">SIXT Sense</div>
             <div className="text-sm text-gray-400">
                 {step === 1 && "Welcome"}
                 {step === 2 && "Your Vehicle"}

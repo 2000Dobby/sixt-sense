@@ -1,20 +1,40 @@
-import { motion, useMotionValue, useTransform } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ChevronRight, Unlock } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export default function UnlockSlider({ onUnlock }: { onUnlock: () => void }) {
     const [unlocked, setUnlocked] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [sliderWidth, setSliderWidth] = useState(0);
     const x = useMotionValue(0);
-    const opacity = useTransform(x, [0, 200], [1, 0]);
-    const textOpacity = useTransform(x, [0, 100], [1, 0]);
-    const bgOpacity = useTransform(x, [0, 220], [0.2, 1]);
+    
+    const textOpacity = useTransform(x, [0, sliderWidth / 2], [1, 0]);
+    const bgOpacity = useTransform(x, [0, sliderWidth], [0.2, 1]);
+    
+    useEffect(() => {
+        const updateWidth = () => {
+            if (containerRef.current) {
+                // Container width - padding (4px * 2) - handle width (56px)
+                setSliderWidth(containerRef.current.offsetWidth - 8 - 56);
+            }
+        };
+
+        updateWidth();
+        window.addEventListener('resize', updateWidth);
+        return () => window.removeEventListener('resize', updateWidth);
+    }, []);
     
     const handleDragEnd = () => {
-        if (x.get() > 200) {
-            setUnlocked(true);
-            onUnlock();
-        } else {
-            // Reset
+        if (x.get() > sliderWidth * 0.8) {
+            animate(x, sliderWidth, {
+                type: "spring",
+                stiffness: 400,
+                damping: 40,
+                onComplete: () => {
+                    setUnlocked(true);
+                    onUnlock();
+                }
+            });
         }
     };
 
@@ -32,7 +52,10 @@ export default function UnlockSlider({ onUnlock }: { onUnlock: () => void }) {
     }
 
     return (
-        <div className="w-full h-16 bg-zinc-900 rounded-full relative flex items-center p-1 border border-zinc-800 overflow-hidden">
+        <div 
+            ref={containerRef}
+            className="w-full h-16 bg-zinc-900 rounded-full relative flex items-center p-1 border border-zinc-800 overflow-hidden"
+        >
             <motion.div 
                 style={{ opacity: bgOpacity }}
                 className="absolute inset-0 bg-sixt-orange"
@@ -47,8 +70,8 @@ export default function UnlockSlider({ onUnlock }: { onUnlock: () => void }) {
 
             <motion.div
                 drag="x"
-                dragConstraints={{ left: 0, right: 220 }}
-                dragElastic={0.1}
+                dragConstraints={{ left: 0, right: sliderWidth }}
+                dragElastic={0.05}
                 dragSnapToOrigin
                 onDragEnd={handleDragEnd}
                 style={{ x }}
