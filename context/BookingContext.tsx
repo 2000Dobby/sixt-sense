@@ -11,9 +11,9 @@ interface BookingContextType extends BookingState {
     rejectUpgrade: () => void;
     unlockCar: (carOverride?: Car, successMessage?: string) => Promise<void>;
     // New Navigation/Debug functions
-    isUpgradePopupOpen: boolean;
-    openUpgradePopup: () => void;
-    closeUpgradePopup: () => void;
+    popupState: 'UPGRADE' | 'UNLOCK' | null;
+    openPopup: (type: 'UPGRADE' | 'UNLOCK') => void;
+    closePopup: () => void;
     resetFlow: () => void;
     setDebugOffer: (offer: UpgradeOffer) => void;
 }
@@ -30,7 +30,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         isLoading: false,
     });
 
-    const [isUpgradePopupOpen, setIsUpgradePopupOpen] = useState(false);
+    const [popupState, setPopupState] = useState<'UPGRADE' | 'UNLOCK' | null>(null);
 
     const setStep = (step: number) => {
         setState(prev => ({ ...prev, step }));
@@ -111,7 +111,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             assignedCar: prev.bookedCar, // Reset to original car
             isUnlocked: false
         }));
-        setIsUpgradePopupOpen(false);
+        setPopupState(null);
     };
 
     // Load booking data on mount
@@ -127,9 +127,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             acceptUpgrade, 
             rejectUpgrade, 
             unlockCar,
-            isUpgradePopupOpen,
-            openUpgradePopup: () => setIsUpgradePopupOpen(true),
-            closeUpgradePopup: () => setIsUpgradePopupOpen(false),
+            popupState,
+            openPopup: (type) => setPopupState(type),
+            closePopup: () => setPopupState(null),
             resetFlow,
             setDebugOffer
         }}>

@@ -4,27 +4,23 @@ import { AnimatePresence } from "framer-motion";
 import Header from "./components/Header";
 import Step2VehicleSelection from "./components/Step2VehicleSelection";
 import Step3Navigation from "./components/Step3Navigation";
-import Step4Unlock from "./components/Step4Unlock";
 import Step5Success from "./components/Step5Success";
 import StepUpgradeSuccess from "./components/StepUpgradeSuccess";
 import PickupButton from "./components/PickupButton";
-import UpgradePopup from "./components/UpgradePopup";
+import ActionPopup from "./components/ActionPopup";
 import { useBooking } from "@/context/BookingContext";
 
 export default function Home() {
-  const { step, setStep, bookedCar, availableOffer, assignedCar, acceptUpgrade, rejectUpgrade, unlockCar } = useBooking();
+  const { step, setStep, bookedCar, availableOffer, assignedCar, acceptUpgrade, rejectUpgrade, openPopup } = useBooking();
 
   const handlePickupClick = () => {
     if (step === 1) setStep(2);
     else if (step === 2) rejectUpgrade();
+    else if (step === 3) openPopup('UNLOCK');
   };
 
   const handleUpgradeClick = async () => {
     await acceptUpgrade();
-  };
-
-  const handleArrivedClick = () => {
-    setStep(4);
   };
 
   return (
@@ -50,10 +46,6 @@ export default function Home() {
                 <Step3Navigation car={assignedCar} />
             )}
 
-            {step === 4 && assignedCar && (
-                <Step4Unlock car={assignedCar} onUnlock={unlockCar} />
-            )}
-
             {step === 5 && <Step5Success />}
         </AnimatePresence>
       </div>
@@ -63,7 +55,7 @@ export default function Home() {
         <PickupButton step={step} onClick={handlePickupClick} />
       </AnimatePresence>
 
-      <UpgradePopup />
+      <ActionPopup />
     </main>
   );
 }

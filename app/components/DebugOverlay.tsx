@@ -7,7 +7,7 @@ import clsx from "clsx";
 
 export default function DebugOverlay() {
     const [isVisible, setIsVisible] = useState(false);
-    const { step, setStep, openUpgradePopup, resetFlow, setDebugOffer } = useBooking();
+    const { step, setStep, openPopup, resetFlow, setDebugOffer } = useBooking();
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,14 +55,14 @@ export default function DebugOverlay() {
                                 <div className="font-bold text-gray-400 mb-2 uppercase text-xs tracking-wider">Simulate GPS</div>
                                 
                                 <button 
-                                    onClick={() => setStep(4)}
+                                    onClick={() => openPopup('UNLOCK')}
                                     className="w-full flex items-center gap-2 p-2 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 transition-colors"
                                 >
                                     <MapPin className="w-4 h-4" /> Near Booked Car
                                 </button>
 
                                 <button 
-                                    onClick={openUpgradePopup}
+                                    onClick={() => openPopup('UPGRADE')}
                                     className="w-full flex items-center gap-2 p-2 bg-sixt-orange/20 text-sixt-orange rounded hover:bg-sixt-orange/30 transition-colors"
                                 >
                                     <MapPin className="w-4 h-4" /> Near Upgrade Car
