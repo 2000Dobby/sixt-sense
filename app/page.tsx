@@ -41,8 +41,8 @@ export default function Home() {
                 />
             )}
 
-            {step === 3 && (
-                <Step3Navigation onArrivedClick={handleArrivedClick} />
+            {step === 3 && assignedCar && (
+                <Step3Navigation car={assignedCar} />
             )}
 
             {step === 4 && assignedCar && (
