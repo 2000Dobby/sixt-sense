@@ -1,11 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useBooking } from "@/context/BookingContext";
-import { Settings, MapPin, RotateCcw } from "lucide-react";
+import { MapPin, RotateCcw } from "lucide-react";
 import clsx from "clsx";
 
 export default function DebugOverlay() {
-    const [isOpen, setIsOpen] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const { step, setStep, openUpgradePopup, resetFlow } = useBooking();
 
@@ -23,15 +22,7 @@ export default function DebugOverlay() {
 
     return (
         <div className="fixed bottom-4 right-4 z-[100]">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="bg-gray-800 text-white p-3 rounded-full shadow-lg border border-gray-700 hover:bg-gray-700 transition-colors"
-            >
-                <Settings className={clsx("w-6 h-6 transition-transform", isOpen && "rotate-90")} />
-            </button>
-
-            {isOpen && (
-                <div className="absolute bottom-14 right-0 w-64 bg-gray-900/95 backdrop-blur border border-gray-700 rounded-xl p-4 shadow-2xl text-sm">
+            <div className="w-64 bg-gray-900/95 backdrop-blur border border-gray-700 rounded-xl p-4 shadow-2xl text-sm">
                     <div className="font-bold text-gray-400 mb-3 uppercase text-xs tracking-wider">Debug Controls</div>
                     
                     <div className="space-y-2">
@@ -67,8 +58,7 @@ export default function DebugOverlay() {
                     <div className="mt-3 text-xs text-gray-500 font-mono">
                         Current Step: {step}
                     </div>
-                </div>
-            )}
+            </div>
         </div>
     );
 }
