@@ -1,5 +1,6 @@
 // import fetch from 'node-fetch'; // Native fetch is available in Node 18+
 
+
 async function testEndpoints() {
   const BASE_URL = 'http://localhost:3000'; // Adjust if your dev server is on a different port
 

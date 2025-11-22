@@ -69,6 +69,11 @@ const personaSchema = {
       type: "string",
       enum: ["formal", "casual"],
     },
+    idealCategory: {
+      type: "array",
+      items: { type: "string" },
+      description: "List of ACRISS category first letters suitable for this persona (e.g. ['F', 'P', 'L'] for a luxury traveler). Valid codes: M (Mini), E (Economy), C (Compact), I (Intermediate), S (Standard), F (Full-size), P (Premium), L (Luxury), X (Special/SUV).",
+    },
   },
   required: [
     "id",
@@ -101,6 +106,12 @@ and their trip into a structured Persona object for an upsell engine.
 
 Follow the JSON schema exactly. Use only the allowed enum values where provided.
 Keep 'label' short and 'description' to 1-2 sentences.
+
+When populating 'idealCategory', consider the group size, luggage, comfort preference, and trip purpose.
+- 'M', 'E', 'C' are good for budget/solo/small groups.
+- 'I', 'S', 'F' are good for comfort/families.
+- 'P', 'L' are for premium/luxury/business.
+- 'X' is for SUVs, Vans, or Special needs (moving).
 `;
 
 export async function POST(req: NextRequest) {
@@ -135,4 +146,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

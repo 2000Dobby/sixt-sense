@@ -28,7 +28,7 @@ export default async function DemoPage({ searchParams }: { searchParams: Promise
 
   // 2. Get recommendations directly on the server
   const recommendations = await getRecommendationsForBooking(bookingId, selectedPersonaId, selectedVehicleId);
-  const { persona, userTags, bestCarOffer, primaryOfferType } = recommendations;
+  const { persona, userTags, bestCarOffer, primaryOfferType, finalOffer } = recommendations;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-sans">
@@ -97,9 +97,7 @@ export default async function DemoPage({ searchParams }: { searchParams: Promise
           <div className="flex items-center gap-3 mb-3">
             <span className="text-2xl font-bold text-gray-800">{persona.label}</span>
             <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
-              {primaryOfferType === "both" ? "Target: Mixed" : 
-               primaryOfferType === "car" ? "Target: Vehicle" : 
-               primaryOfferType === "protection" ? "Target: Protection" : "Target: None"}
+               Ideal Categories: {persona.idealCategory?.join(", ") || "Any"}
             </span>
           </div>
           <p className="text-gray-600 mb-4 italic">"{persona.description}"</p>
@@ -113,14 +111,64 @@ export default async function DemoPage({ searchParams }: { searchParams: Promise
           </div>
         </div>
 
-        {/* Car Offer Section */}
+        {/* Final Offer Section */}
+        <div className="p-6 bg-slate-50">
+            <h2 className="text-gray-500 uppercase text-xs font-bold tracking-wider mb-4">Final Recommendation</h2>
+            
+            {finalOffer.type === 'car' && finalOffer.car ? (
+               <div className="border-2 border-green-500 rounded-lg p-4 bg-white">
+                  <div className="flex justify-between items-start">
+                    <div>
+                        <h3 className="text-lg font-bold text-green-700">Car Upgrade</h3>
+                        <p className="font-medium text-gray-900">{getVehicleDisplayName(finalOffer.car.vehicle)}</p>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-2xl font-bold text-green-600">{finalOffer.car.totalScore.toFixed(1)}</div>
+                        <div className="text-xs text-gray-500">Match Score</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    {finalOffer.car.categoryMatch > 0 && <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Category Match</span>}
+                    {finalOffer.car.ecoMatch > 0 && <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Eco Friendly</span>}
+                    {finalOffer.car.spaceFit > 0 && <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Space Fit</span>}
+                  </div>
+               </div>
+            ) : finalOffer.type === 'protection' && finalOffer.protection ? (
+               <div className="border-2 border-blue-500 rounded-lg p-4 bg-white">
+                  <div className="flex justify-between items-start">
+                    <div>
+                        <h3 className="text-lg font-bold text-blue-700">Protection Plan</h3>
+                        <p className="font-medium text-gray-900">{finalOffer.protection.protection.name}</p>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-2xl font-bold text-blue-600">{finalOffer.protection.totalScore.toFixed(1)}</div>
+                         <div className="text-xs text-gray-500">Risk Score</div>
+                    </div>
+                  </div>
+               </div>
+            ) : (
+                <div className="border-2 border-gray-200 rounded-lg p-4 bg-white text-center text-gray-500">
+                    No strong recommendation found.
+                    <p className="text-xs mt-1">{finalOffer.reason}</p>
+                </div>
+            )}
+        </div>
+
+        {/* Car Offer Section (Detailed) */}
         <div className="p-6">
           {bestCarOffer ? (
             <div>
-              <div className="flex items-center gap-2 mb-4 text-sm text-gray-500">
-                <span>Current: <strong>{getVehicleDisplayName(bestCarOffer.fromVehicle)}</strong></span>
-                <span>→</span>
-                <span className="text-orange-600">Upgrade: <strong>{getVehicleDisplayName(bestCarOffer.toVehicle)}</strong></span>
+              <div className="flex items-center justify-between gap-2 mb-4 text-sm text-gray-500">
+                <div className="flex items-center gap-2">
+                  <span>Current: <strong>{getVehicleDisplayName(bestCarOffer.fromVehicle)}</strong> ({bestCarOffer.fromVehicle.price} {bestCarOffer.fromVehicle.currency})</span>
+                  <span>→</span>
+                  <span className="text-orange-600">Upgrade: <strong>{getVehicleDisplayName(bestCarOffer.toVehicle)}</strong> ({bestCarOffer.toVehicle.price} {bestCarOffer.toVehicle.currency})</span>
+                </div>
+                {bestCarOffer.priceDifference && bestCarOffer.priceDifference > 0 && (
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded font-bold">
+                    +{bestCarOffer.priceDifference} {bestCarOffer.toVehicle.currency} / day
+                  </span>
+                )}
               </div>
 
               <div className="bg-orange-50 border border-orange-100 rounded-lg p-5">
@@ -161,4 +209,3 @@ export default async function DemoPage({ searchParams }: { searchParams: Promise
     </div>
   );
 }
-

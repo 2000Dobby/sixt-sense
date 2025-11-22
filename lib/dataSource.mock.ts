@@ -8,6 +8,8 @@ const DEMO_VEHICLES: Vehicle[] = [
     model: "Q7",
     brand: "Audi",
     group: "SUV",
+    groupType: "SUV",
+    acrissCode: "XFAR",
     seats: 7,
     fuelType: "Petrol",
     transmission: "Automatic",
@@ -20,6 +22,8 @@ const DEMO_VEHICLES: Vehicle[] = [
     model: "5 Series",
     brand: "BMW",
     group: "Sedan",
+    groupType: "Premium",
+    acrissCode: "PDAR",
     seats: 5,
     fuelType: "Petrol",
     transmission: "Automatic",
@@ -32,6 +36,8 @@ const DEMO_VEHICLES: Vehicle[] = [
     model: "ID.3",
     brand: "Volkswagen",
     group: "Compact",
+    groupType: "Compact",
+    acrissCode: "CCAE",
     seats: 4,
     fuelType: "EV",
     transmission: "Automatic",
@@ -44,6 +50,8 @@ const DEMO_VEHICLES: Vehicle[] = [
     model: "4 Series Convertible",
     brand: "BMW",
     group: "Convertible",
+    groupType: "Luxury",
+    acrissCode: "LTAR",
     seats: 4,
     fuelType: "Petrol",
     transmission: "Automatic",
@@ -105,8 +113,14 @@ const mockBookings = new Map<string, BookingSummary>();
 
 function createRandomBooking(): BookingSummary {
   const id = `demo-${Math.random().toString(36).slice(2, 8)}`;
+  
+  // Randomly pick a booked category from our available cars
+  const categories = ["CCAE", "PDAR", "XFAR", "LTAR"];
+  const bookedCategory = categories[Math.floor(Math.random() * categories.length)];
+
   const booking: BookingSummary = {
     id,
+    bookedCategory,
     // Simulate real fields
     pickupLocation: "HackaTUM Campus",
     durationDays: 3,

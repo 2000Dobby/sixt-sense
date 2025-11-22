@@ -18,6 +18,7 @@ export interface ScoredVehicle {
   brandPremium: number;  // 0 or 1
   pricePenalty: number;  // >= 0, more = worse
   distancePenalty: number; // for now you can default to 0 if no distance info
+  categoryMatch: number; // 0..1 based on idealCategory overlap
   totalScore: number;    // final weighted score
 }
 
@@ -31,6 +32,11 @@ export interface ScoredProtection {
 
 export type PrimaryOfferType = "car" | "protection" | "both" | "none";
 
+export type FinalOffer =
+  | { type: "car"; car: ScoredVehicle }
+  | { type: "protection"; protection: ScoredProtection }
+  | { type: "none"; reason: string };
+
 export interface RecommendationResult {
   bookingId: string;
   booking: Booking;
@@ -40,6 +46,7 @@ export interface RecommendationResult {
   protectionCandidates: ScoredProtection[]; // sorted by totalScore desc
   primaryOfferType: PrimaryOfferType;
   bestCarOffer?: CarUpgradeOffer;
+  finalOffer: FinalOffer;
 }
 
 // --- 2. Helper functions ---
@@ -58,6 +65,36 @@ function tagMatchScore(userTags: UserTag[], carTags: CarTag[]): number {
   if (userTags.length === 0) return 0;
   const overlap = intersectionSize(userTags, carTags);
   return overlap / userTags.length; // 0..1
+}
+
+// Helper to parse ACRISS code (e.g. "LFAR" -> "L")
+function getCategoryCode(vehicle: Vehicle): string | undefined {
+  if (vehicle.acrissCode && vehicle.acrissCode.length > 0) {
+    return vehicle.acrissCode.charAt(0).toUpperCase();
+  }
+  // Fallback: try to infer from groupType if ACRISS is missing
+  // This is heuristic and less precise
+  if (vehicle.groupType) {
+    const g = vehicle.groupType.toLowerCase();
+    if (g.includes("luxury")) return "L";
+    if (g.includes("premium")) return "P";
+    if (g.includes("full")) return "F";
+    if (g.includes("standard")) return "S";
+    if (g.includes("intermediate")) return "I";
+    if (g.includes("compact")) return "C";
+    if (g.includes("economy")) return "E";
+    if (g.includes("mini")) return "M";
+    if (g.includes("suv") || g.includes("special")) return "X";
+  }
+  return undefined;
+}
+
+function categoryMatchScore(vehicle: Vehicle, persona: Persona): number {
+  if (!persona.idealCategory || persona.idealCategory.length === 0) return 0;
+  const carCat = getCategoryCode(vehicle);
+  if (!carCat) return 0;
+  
+  return persona.idealCategory.includes(carCat) ? 1 : 0;
 }
 
 // 2.2 Simple price penalty
@@ -130,6 +167,7 @@ interface VehicleScoreWeights {
   wSpaceFit: number;
   wEcoMatch: number;
   wBrandPremium: number;
+  wCategoryMatch: number;
   wPricePenalty: number;
   wDistancePenalty: number;
 }
@@ -141,6 +179,7 @@ function getVehicleScoreWeights(persona: Persona): VehicleScoreWeights {
     wSpaceFit: 3,
     wEcoMatch: 2,
     wBrandPremium: 1,
+    wCategoryMatch: 3, // New weight for category fit
     wPricePenalty: 2,
     wDistancePenalty: 1,
   };
@@ -186,6 +225,53 @@ function getProtectionScoreWeights(persona: Persona): ProtectionScoreWeights {
   return weights;
 }
 
+// 2.4 Persona Biases for Final Decision
+
+function getPersonaCarBias(persona: Persona): number {
+  let b = 0;
+
+  // Car upgrade appeal
+  if (persona.comfortPreference === "high") b += 0.8;
+  if (persona.brandPreference === "likes_premium") b += 0.5;
+  if (persona.brandPreference === "must_be_premium") b += 1.0;
+  if (persona.tripPurpose === "business") b += 0.5;
+
+  // Eco preference can make EV/hybrid upgrades more appealing in general
+  if (persona.ecoPreference === "wants_ev") b += 0.3;
+
+  // Price sensitivity reduces willingness to upgrade car
+  if (persona.priceSensitivity === "high") {
+    b -= 1.0;
+  } else if (persona.priceSensitivity === "medium") {
+    b -= 0.4;
+  }
+
+  return b;
+}
+
+function getPersonaProtectionBias(persona: Persona): number {
+  let b = 0;
+
+  // Risk attitude and insurance history
+  if (persona.riskAttitude === "risk_averse") b += 1.0;
+  else if (persona.riskAttitude === "balanced") b += 0.3;
+  else if (persona.riskAttitude === "risk_taker") b -= 0.3;
+
+  if (persona.previousInsuranceUptake === "always") b += 0.7;
+  else if (persona.previousInsuranceUptake === "never") b -= 0.5;
+
+  if (persona.franchiseTolerance === "low") b += 0.5; // hates high deductibles
+
+  // Price sensitivity also affects protections, but weaker than car upgrades
+  if (persona.priceSensitivity === "high") {
+    b -= 0.3;
+  } else if (persona.priceSensitivity === "medium") {
+    b -= 0.1;
+  }
+
+  return b;
+}
+
 // --- 3. Scoring a single vehicle ---
 
 function scoreVehicleForUser(
@@ -221,15 +307,23 @@ function scoreVehicleForUser(
 
   // Eco Match
   let ecoMatch = 0;
-  if (
-    (persona.ecoPreference === "wants_ev" || persona.ecoPreference === "likes_hybrid") &&
-    (tags.includes("ev") || tags.includes("hybrid") || tags.includes("likes_eco"))
-  ) {
-    ecoMatch = 1;
+  // If persona wants EV, they prefer "ev" over "hybrid"
+  if (persona.ecoPreference === "wants_ev") {
+    if (tags.includes("ev")) ecoMatch = 1.0;
+    else if (tags.includes("hybrid")) ecoMatch = 0.5; // acceptable but not ideal
+  } 
+  // If persona specifically likes hybrid (maybe range anxiety), they might prefer hybrid or EV
+  else if (persona.ecoPreference === "likes_hybrid") {
+     if (tags.includes("hybrid")) ecoMatch = 1.0;
+     else if (tags.includes("ev")) ecoMatch = 0.8; // EV is also good
+     else if (tags.includes("likes_eco")) ecoMatch = 0.5;
   }
 
   // Brand Premium
   const brandPremium = tags.includes("premium_brand") ? 1 : 0;
+
+  // Category Match
+  const categoryMatch = categoryMatchScore(vehicle, persona);
 
   // Price Penalty
   const pricePenalty = pricePenaltyForVehicle(vehicle, persona);
@@ -244,7 +338,8 @@ function scoreVehicleForUser(
     weights.wTagMatch * matchScore +
     weights.wSpaceFit * spaceFit +
     weights.wEcoMatch * ecoMatch +
-    weights.wBrandPremium * brandPremium -
+    weights.wBrandPremium * brandPremium +
+    weights.wCategoryMatch * categoryMatch -
     weights.wPricePenalty * pricePenalty -
     weights.wDistancePenalty * distancePenalty;
 
@@ -257,6 +352,7 @@ function scoreVehicleForUser(
     brandPremium,
     pricePenalty,
     distancePenalty,
+    categoryMatch,
     totalScore,
   };
 }
@@ -346,6 +442,67 @@ function decidePrimaryOfferType(
   }
 }
 
+function decideFinalOffer(
+  persona: Persona,
+  bestCar: ScoredVehicle | undefined,
+  offerScoreCar: number,
+  carOk: boolean,
+  bestProtection: ScoredProtection | undefined,
+  offerScoreProtection: number,
+  protectionOk: boolean
+): FinalOffer {
+  if (!carOk && !protectionOk) {
+    return {
+      type: "none",
+      reason: "No suitable car upgrade or protection offer found for this trip.",
+    };
+  }
+
+  if (carOk && !protectionOk && bestCar) {
+    return { type: "car", car: bestCar };
+  }
+
+  if (!carOk && protectionOk && bestProtection) {
+    return { type: "protection", protection: bestProtection };
+  }
+
+  // Both car and protection are acceptable → tie-break
+  if (bestCar && bestProtection) {
+    // If one is clearly better, pick it
+    const EPS = 0.2; // tie-break margin
+    if (offerScoreCar > offerScoreProtection + EPS) {
+      return { type: "car", car: bestCar };
+    }
+    if (offerScoreProtection > offerScoreCar + EPS) {
+      return { type: "protection", protection: bestProtection };
+    }
+
+    // Scores are very similar → use persona to break ties
+    if (persona.riskAttitude === "risk_averse") {
+      return { type: "protection", protection: bestProtection };
+    }
+    if (persona.tripPurpose === "business") {
+      return { type: "car", car: bestCar };
+    }
+
+    // Default: prefer car upgrade
+    return { type: "car", car: bestCar };
+  }
+
+  // Fallbacks (should rarely be hit)
+  if (bestCar && carOk) {
+    return { type: "car", car: bestCar };
+  }
+  if (bestProtection && protectionOk) {
+    return { type: "protection", protection: bestProtection };
+  }
+
+  return {
+    type: "none",
+    reason: "No consistent recommendation could be derived.",
+  };
+}
+
 // --- 6. Main function: getRecommendationsForBooking ---
 
 export async function getRecommendationsForBooking(
@@ -384,8 +541,32 @@ export async function getRecommendationsForBooking(
   const bestCar = scoredVehicles[0];
   const bestProtection = scoredProtections[0];
 
-  // 7. Decide primaryOfferType
+  // 7. Decide primaryOfferType (Legacy)
   const primaryOfferType = decidePrimaryOfferType(persona, bestCar, bestProtection);
+
+  // --- New Final Offer Logic ---
+  const personaCarBias = getPersonaCarBias(persona);
+  const personaProtectionBias = getPersonaProtectionBias(persona);
+
+  const rawCarScore = bestCar ? bestCar.totalScore : -Infinity;
+  const rawProtectionScore = bestProtection ? bestProtection.totalScore : -Infinity;
+
+  const offerScoreCar = rawCarScore + personaCarBias;
+  const offerScoreProtection = rawProtectionScore + personaProtectionBias;
+
+  const MIN_SCORE = 0.5;
+  const carOk = offerScoreCar >= MIN_SCORE;
+  const protectionOk = offerScoreProtection >= MIN_SCORE;
+
+  const finalOffer = decideFinalOffer(
+    persona,
+    bestCar,
+    offerScoreCar,
+    carOk,
+    bestProtection,
+    offerScoreProtection,
+    protectionOk
+  );
 
   let bestCarOffer: CarUpgradeOffer | undefined;
 
@@ -407,21 +588,59 @@ export async function getRecommendationsForBooking(
 
   // Fallback if no forced vehicle or forced vehicle not found
   if (!fromScored && scoredVehicles.length > 0) {
-    // naive: treat the lowest-scoring car as "current" if no explicit reserved car info.
-    fromScored = scoredVehicles[scoredVehicles.length - 1];
+    // Try to find a vehicle from the booked category (first letter of ACRISS)
+    const bookedCategory = booking.bookedCategory ? booking.bookedCategory.charAt(0).toUpperCase() : undefined;
+    
+    if (bookedCategory) {
+      // Filter vehicles matching the booked category
+      const categoryVehicles = scoredVehicles.filter(sv => {
+        const code = getCategoryCode(sv.vehicle);
+        return code === bookedCategory;
+      });
+
+      if (categoryVehicles.length > 0) {
+        // Pick the WORST scoring vehicle from the booked category
+        // scoredVehicles is sorted desc, so filter preserves order? 
+        // actually we want the one with lowest score.
+        // Since scoredVehicles is sorted desc, the last one in categoryVehicles is the worst.
+        fromScored = categoryVehicles[categoryVehicles.length - 1];
+      }
+    }
+
+    // If still no fromScored (no booked category info or no matching vehicles), fallback to worst overall
+    if (!fromScored) {
+      fromScored = scoredVehicles[scoredVehicles.length - 1];
+    }
   }
 
   // If we have a valid "from" vehicle, try to find a better "to" vehicle
   if (fromScored) {
     const fromVehicle = fromScored.vehicle;
     const fromTags = fromScored.tags;
+    const fromPrice = (fromVehicle as any).price || (fromVehicle as any).pricePerDay || 0;
 
-    // Find best candidate that is NOT the fromVehicle
-    const toScored = scoredVehicles.find((sv) => sv.vehicle.id !== fromVehicle.id);
+    // Find best candidate that:
+    // 1. Is NOT the fromVehicle
+    // 2. Costs strictly MORE than the fromVehicle
+    // 3. Has a better score (implicit if we pick from top of sorted list)
+    const toScored = scoredVehicles.find((sv) => {
+      if (sv.vehicle.id === fromVehicle.id) return false;
+      
+      const toPrice = (sv.vehicle as any).price || (sv.vehicle as any).pricePerDay || 0;
+      
+      // Enforce strict price upgrade
+      // The user explicitly requested "it should just cost more" rather than strict category ranking
+      if (toPrice <= fromPrice) return false;
+
+      // Ensure it's actually a better match/score
+      return sv.totalScore > fromScored!.totalScore;
+    });
 
     if (toScored) {
       const toVehicle = toScored.vehicle;
       const toTags = toScored.tags;
+      // Re-calculate or retrieve toPrice if scope is lost (although it was defined in .find() callback, that scope is closed)
+      const toPrice = (toVehicle as any).price || (toVehicle as any).pricePerDay || 0;
 
       // Build the upsell message (headline, bullets, explanations)
       const message = await buildCarUpgradeMessage(
@@ -441,6 +660,7 @@ export async function getRecommendationsForBooking(
         toTags,
         message,
         score: toScored.totalScore,
+        priceDifference: toPrice - fromPrice, // <--- Calculate difference here
       };
     }
   }
@@ -455,6 +675,6 @@ export async function getRecommendationsForBooking(
     protectionCandidates: scoredProtections,
     primaryOfferType,
     bestCarOffer,
+    finalOffer,
   };
 }
-

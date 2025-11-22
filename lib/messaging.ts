@@ -22,6 +22,7 @@ export interface CarUpgradeOffer {
   toTags: CarTag[];
   message: UpsellMessage;
   score?: number;             // optional, can be wired from ScoredVehicle.totalScore later
+  priceDifference?: number; // <--- Add this field
 }
 
 function getVehicleDisplayName(vehicle: Vehicle): string {

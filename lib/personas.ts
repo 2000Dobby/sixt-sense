@@ -31,6 +31,10 @@ export interface Persona {
   wantsFastPickup: boolean;
   language: string;      // e.g. "en", "de"
   toneOfVoice: "formal" | "casual";
+
+  // New field: Recommended vehicle categories (ACRISS codes or category prefixes)
+  // e.g. "M" (Mini), "C" (Compact), "F" (Full-size), "P" (Premium), "L" (Luxury), "X" (Special/SUV)
+  idealCategory?: string[]; 
 }
 
 export type UserTag = string;
@@ -59,6 +63,7 @@ export const PERSONAS: Persona[] = [
     wantsFastPickup: false,
     language: "en",
     toneOfVoice: "casual",
+    idealCategory: ["I", "S", "F", "P", "L", "X"] // Intermediate, Standard, Full-size, Premium, Luxury, Special (SUV/Van)
   },
   {
     id: "time_pressed_consultant",
@@ -81,6 +86,7 @@ export const PERSONAS: Persona[] = [
     wantsFastPickup: true,
     language: "en",
     toneOfVoice: "formal",
+    idealCategory: ["P", "L", "X", "F"] // Premium, Luxury, Special, Full-size
   },
   {
     id: "budget_backpacker",
@@ -103,6 +109,7 @@ export const PERSONAS: Persona[] = [
     wantsFastPickup: false,
     language: "en",
     toneOfVoice: "casual",
+    idealCategory: ["M", "E", "C"] // Mini, Economy, Compact
   },
   {
     id: "eco_conscious_urbanite",
@@ -125,6 +132,7 @@ export const PERSONAS: Persona[] = [
     wantsFastPickup: false,
     language: "en",
     toneOfVoice: "casual",
+    idealCategory: ["E", "C", "I"] // Economy, Compact, Intermediate (often where EVs sit)
   },
   {
     id: "weekend_getaway_couple",
@@ -147,6 +155,7 @@ export const PERSONAS: Persona[] = [
     wantsFastPickup: true,
     language: "en",
     toneOfVoice: "casual",
+    idealCategory: ["C", "I", "S", "F"] // Compact, Intermediate, Standard, Full-size
   },
   {
     id: "luxury_enthusiast",
@@ -169,6 +178,7 @@ export const PERSONAS: Persona[] = [
     wantsFastPickup: true,
     language: "en",
     toneOfVoice: "formal",
+    idealCategory: ["L", "X"] // Luxury, Special
   },
   {
     id: "digital_nomad",
@@ -191,6 +201,7 @@ export const PERSONAS: Persona[] = [
     wantsFastPickup: false,
     language: "en",
     toneOfVoice: "casual",
+    idealCategory: ["I", "S", "F"] // Intermediate, Standard, Full-size
   },
   {
     id: "sports_team_organizer",
@@ -213,6 +224,7 @@ export const PERSONAS: Persona[] = [
     wantsFastPickup: false,
     language: "en",
     toneOfVoice: "casual",
+    idealCategory: ["F", "P", "L", "X"] // Full-size, Premium, Luxury, Special (Vans/SUVs)
   },
   {
     id: "relocating_mover",
@@ -235,6 +247,7 @@ export const PERSONAS: Persona[] = [
     wantsFastPickup: true,
     language: "en",
     toneOfVoice: "casual",
+    idealCategory: ["S", "F", "P", "L", "X"] // Van territory (often mapped to special/luxury codes depending on implementation, but X is safe)
   },
   {
     id: "retired_explorers",
@@ -257,6 +270,7 @@ export const PERSONAS: Persona[] = [
     wantsFastPickup: false,
     language: "en", // or local language
     toneOfVoice: "formal",
+    idealCategory: ["I", "S", "F", "P"] // Intermediate, Standard, Full-size, Premium
   }
 ];
 
@@ -397,4 +411,3 @@ export async function getPersonaForBooking(bookingOrId: Booking | string, forceP
     userTags: getUserTagsFromPersona(selectedPersona)
   };
 }
-
