@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import 'leaflet/dist/leaflet.css';
 import { BookingProvider } from "@/context/BookingContext";
 import DebugOverlay from "./components/misc/DebugOverlay";
 
