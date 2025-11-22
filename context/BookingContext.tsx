@@ -9,7 +9,7 @@ interface BookingContextType extends BookingState {
     loadBooking: () => Promise<void>;
     acceptUpgrade: () => Promise<void>;
     rejectUpgrade: () => void;
-    unlockCar: (carOverride?: Car) => Promise<void>;
+    unlockCar: (carOverride?: Car, successMessage?: string) => Promise<void>;
     // New Navigation/Debug functions
     isUpgradePopupOpen: boolean;
     openUpgradePopup: () => void;
@@ -68,7 +68,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
                     ...prev,
                     assignedCar: state.availableOffer!.car!, // Assign the upgrade car
                     isLoading: false,
-                    step: 3 // Move to navigation after upgrade
+                    step: 6 // Move to Upgrade Success Step
                 }));
             }
         } catch (error) {
@@ -82,7 +82,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         setStep(3);
     };
 
-    const unlockCar = async (carOverride?: Car) => {
+    const unlockCar = async (carOverride?: Car, successMessage: string = "Car Unlocked!") => {
         const carToUnlock = carOverride || state.assignedCar;
         if (!carToUnlock) return;
 
@@ -94,7 +94,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
                     ...prev,
                     isUnlocked: true,
                     isLoading: false,
-                    step: 5
+                    step: 5,
+                    successMessage
                 }));
             }
         } catch (error) {

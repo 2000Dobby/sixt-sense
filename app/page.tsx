@@ -6,6 +6,7 @@ import Step2VehicleSelection from "./components/Step2VehicleSelection";
 import Step3Navigation from "./components/Step3Navigation";
 import Step4Unlock from "./components/Step4Unlock";
 import Step5Success from "./components/Step5Success";
+import StepUpgradeSuccess from "./components/StepUpgradeSuccess";
 import PickupButton from "./components/PickupButton";
 import UpgradePopup from "./components/UpgradePopup";
 import { useBooking } from "@/context/BookingContext";
@@ -39,6 +40,10 @@ export default function Home() {
                     offer={availableOffer}
                     onUpgradeClick={handleUpgradeClick} 
                 />
+            )}
+
+            {step === 6 && (
+                <StepUpgradeSuccess />
             )}
 
             {step === 3 && assignedCar && (

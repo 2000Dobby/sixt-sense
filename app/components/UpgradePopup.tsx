@@ -4,12 +4,12 @@ import { useBooking } from "@/context/BookingContext";
 import UnlockSlider from "./UnlockSlider";
 
 export default function UpgradePopup() {
-    const { isUpgradePopupOpen, closeUpgradePopup, availableOffer, acceptUpgrade, unlockCar } = useBooking();
+    const { isUpgradePopupOpen, closeUpgradePopup, availableOffer, acceptUpgrade, unlockCar, isLoading } = useBooking();
 
     const handleSwipeToUpgrade = async () => {
         if (availableOffer?.car) {
             await acceptUpgrade();
-            await unlockCar(availableOffer.car);
+            await unlockCar(availableOffer.car, "Successfully upgraded & unlocked car");
             closeUpgradePopup();
         }
     };
@@ -75,7 +75,12 @@ export default function UpgradePopup() {
                         </ul>
 
                         <div className="mb-4">
-                            <UnlockSlider onUnlock={handleSwipeToUpgrade} label="Slide to Upgrade & Unlock" />
+                            <UnlockSlider 
+                                onUnlock={handleSwipeToUpgrade} 
+                                label="Slide to Upgrade & Unlock" 
+                                successLabel="Upgraded & Unlocked"
+                                isLoading={isLoading} 
+                            />
                         </div>
                     </motion.div>
                 </>

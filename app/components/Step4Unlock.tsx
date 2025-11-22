@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Car as CarIcon } from "lucide-react";
 import UnlockSlider from "./UnlockSlider";
 import { Car } from "@/types";
+import { useBooking } from "@/context/BookingContext";
 
 interface Step4UnlockProps {
     car: Car;
@@ -9,6 +10,8 @@ interface Step4UnlockProps {
 }
 
 export default function Step4Unlock({ car, onUnlock }: Step4UnlockProps) {
+    const { isLoading } = useBooking();
+
     return (
         <motion.div
             key="step4-content"
@@ -28,7 +31,11 @@ export default function Step4Unlock({ car, onUnlock }: Step4UnlockProps) {
             </div>
             
             <div className="w-full relative z-10">
-                <UnlockSlider onUnlock={onUnlock} />
+                <UnlockSlider 
+                    onUnlock={onUnlock} 
+                    isLoading={isLoading} 
+                    successLabel="Unlocked"
+                />
             </div>
         </motion.div>
     );

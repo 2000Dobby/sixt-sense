@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Car as CarIcon, ShieldCheck, ArrowRight, Shield } from "lucide-react";
 import { Car, UpgradeOffer } from "@/types";
+import UnlockSlider from "./UnlockSlider";
+import { useBooking } from "@/context/BookingContext";
 
 interface Step2VehicleSelectionProps {
     currentCar: Car;
@@ -17,7 +19,7 @@ export default function Step2VehicleSelection({
     distance = "350m",
     upgradeDistance = "150m"
 }: Step2VehicleSelectionProps) {
-    
+    const { isLoading } = useBooking();
     const isProtectionOnly = offer.type === 'PROTECTION';
     const hasCar = offer.type === 'CAR_UPGRADE';
 
@@ -96,12 +98,14 @@ export default function Step2VehicleSelection({
                     ))}
                 </ul>
 
-                <button 
-                    onClick={onUpgradeClick}
-                    className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 mt-auto shrink-0"
-                >
-                    Upgrade for ${offer.price}/day <ArrowRight className="w-4 h-4" />
-                </button>
+                <div className="mt-auto shrink-0">
+                    <UnlockSlider 
+                        onUnlock={onUpgradeClick} 
+                        label={`Slide to upgrade for +${offer.price}€/day`}
+                        successLabel="Upgraded"
+                        isLoading={isLoading}
+                    />
+                </div>
             </div>
         </motion.div>
     );

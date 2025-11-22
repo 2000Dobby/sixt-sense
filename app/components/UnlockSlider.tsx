@@ -2,8 +2,20 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ChevronRight, Unlock } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
-export default function UnlockSlider({ onUnlock, label = "Slide to unlock" }: { onUnlock: () => void; label?: string }) {
-    const [unlocked, setUnlocked] = useState(false);
+interface UnlockSliderProps {
+    onUnlock: () => void;
+    label?: string;
+    isLoading?: boolean;
+    successLabel?: string;
+}
+
+export default function UnlockSlider({ 
+    onUnlock, 
+    label = "Slide to unlock", 
+    isLoading = false,
+    successLabel = "Unlocked"
+}: UnlockSliderProps) {
+    const [isCompleted, setIsCompleted] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const [sliderWidth, setSliderWidth] = useState(0);
     const x = useMotionValue(0);
@@ -31,14 +43,23 @@ export default function UnlockSlider({ onUnlock, label = "Slide to unlock" }: { 
                 stiffness: 400,
                 damping: 40,
                 onComplete: () => {
-                    setUnlocked(true);
-                    onUnlock();
+                    setIsCompleted(true);
+                    // Add a small delay before calling onUnlock to let the user see the success state
+                    setTimeout(() => {
+                        onUnlock();
+                    }, 200);
                 }
+            });
+        } else {
+            animate(x, 0, {
+                type: "spring",
+                stiffness: 400,
+                damping: 40
             });
         }
     };
 
-    if (unlocked) {
+    if (isCompleted) {
         return (
             <motion.div 
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -46,7 +67,7 @@ export default function UnlockSlider({ onUnlock, label = "Slide to unlock" }: { 
                 className="w-full h-16 bg-green-500 rounded-full flex items-center justify-center gap-2 text-black font-bold text-lg"
             >
                 <Unlock className="w-6 h-6" />
-                Unlocked
+                {successLabel}
             </motion.div>
         );
     }
@@ -69,7 +90,7 @@ export default function UnlockSlider({ onUnlock, label = "Slide to unlock" }: { 
             </motion.div>
 
             <motion.div
-                drag="x"
+                drag={!isCompleted && !isLoading ? "x" : false}
                 dragConstraints={{ left: 0, right: sliderWidth }}
                 dragElastic={0.05}
                 dragSnapToOrigin

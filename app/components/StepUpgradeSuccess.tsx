@@ -3,12 +3,12 @@ import { Check, Car } from "lucide-react";
 import { useBooking } from "@/context/BookingContext";
 import CircularTimer from "./CircularTimer";
 
-export default function Step5Success() {
-    const { successMessage, resetFlow } = useBooking();
+export default function StepUpgradeSuccess() {
+    const { setStep } = useBooking();
 
     return (
         <motion.div
-            key="step5-content"
+            key="step-upgrade-success"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
@@ -44,21 +44,12 @@ export default function Step5Success() {
                 transition={{ delay: 0.6 }}
                 className="text-3xl font-bold mb-4 text-white"
             >
-                {successMessage || "Car Unlocked!"}
+                You have successfully upgraded to a better car
             </motion.h2>
             
-            <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-                className="text-xl text-zinc-400"
-            >
-                Drive safe, see you soon.
-            </motion.p>
-
             <CircularTimer 
-                duration={10000} 
-                onComplete={resetFlow} 
+                duration={3000} 
+                onComplete={() => setStep(3)} 
             />
         </motion.div>
     );
