@@ -3,6 +3,9 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { BookingState, Car, UpgradeOffer } from '@/types';
 import { mockApi } from '@/services/mockApi';
+import { api } from '@/services/api';
+
+const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API !== 'false';
 
 interface BookingContextType extends BookingState {
     setStep: (step: number) => void;
@@ -53,13 +56,16 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     const loadBooking = async () => {
         setState(prev => ({ ...prev, isLoading: true }));
         try {
-            const { bookingId, bookedCar, offer } = await mockApi.fetchBookingDetails();
+            const data = USE_MOCK_API 
+                ? await mockApi.fetchBookingDetails()
+                : await api.fetchBookingDetails("987654321"); // TODO: Get real ID from URL/Auth
+                
             setState(prev => ({
                 ...prev,
-                bookingId,
-                bookedCar,
-                assignedCar: bookedCar, // Initially assigned the booked car
-                availableOffer: offer,
+                bookingId: data.bookingId,
+                bookedCar: data.bookedCar,
+                assignedCar: data.bookedCar, // Initially assigned the booked car
+                availableOffer: data.offer,
                 isLoading: false
             }));
         } catch (error) {
@@ -73,7 +79,10 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         
         setState(prev => ({ ...prev, isLoading: true }));
         try {
-            const success = await mockApi.postUpgrade(state.availableOffer.id);
+            const success = USE_MOCK_API
+                ? await mockApi.postUpgrade(state.availableOffer.id)
+                : await api.postUpgrade(state.bookingId || "987654321", state.availableOffer.id);
+
             if (success && state.availableOffer.car) {
                 setState(prev => ({
                     ...prev,
@@ -100,7 +109,10 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
         setState(prev => ({ ...prev, isLoading: true }));
         try {
-            const success = await mockApi.postUnlock(carToUnlock.id);
+            const success = USE_MOCK_API
+                ? await mockApi.postUnlock(carToUnlock.id)
+                : await api.postUnlock(carToUnlock.id);
+
             if (success) {
                 setState(prev => ({
                     ...prev,
