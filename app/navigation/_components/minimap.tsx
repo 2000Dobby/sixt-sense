@@ -149,7 +149,7 @@ const ParkingNavigator: React.FC<ParkingNavigatorProps> = ({
     const center: [number, number] = [carLocation.lat, carLocation.lng];
 
     return (
-        <div className="absolute inset-0 w-full h-full">
+        <div className="w-full h-full">
 
 
             {/* --- Map --- */}

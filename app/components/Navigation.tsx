@@ -32,7 +32,7 @@ export default function Navigation({ car }: NavigationProps) {
     const hasNotifiedRef = useRef(false);
     const PROXIMITY_THRESHOLD = 10; // meters
     
-    const targetPosition = { lat: 48.263224370022066, lng: 11.6702772006254 };
+    const targetPosition = { lat: 48.26324772948778, lng: 11.666841151725487 };
     const { userLocation, errorMsg } = useLocation();
     const { orientation: heading, requestPermission, permissionState } = useDeviceOrientation();
 
@@ -40,22 +40,22 @@ export default function Navigation({ car }: NavigationProps) {
     const [waypointsState, setWaypointsState] = useState<Waypoint[]>([
         {
             id: 'wp-1',
-            lat: 48.2625204266961,
-            lng: 11.66880520591034,
+            lat: 48.26241703605156, 
+            lng: 11.66895221734899,
             label: 'MI Exit',
             proximityRadius: 15,
         },
         {
             id: 'wp-2',
-            lat: 48.262787118634016,
-            lng: 11.669357032851115,
+            lat: 48.26260461716745, 
+            lng: 11.667668828526507,
             label: 'Right Turn',
             proximityRadius: 15,
         },
         {
             id: 'wp-3',
-            lat: 48.26269085236446,
-            lng: 11.670038953560521,
+            lat: 48.262703429336305, 
+            lng: 11.66698454399479,
             label: 'Upgrade Car',
             isHiddenPOI: true,
             poiType: 'car-upgrade',
@@ -124,9 +124,84 @@ export default function Navigation({ car }: NavigationProps) {
     const spotNumber = spotNumberMatch ? spotNumberMatch[0] : "---";
     const parkingRow = spotNumber.length > 0 ? spotNumber.charAt(0) : "?";
 
-    // Compass Rotation Logic
-    const compassRotation = heading !== null ? -heading : 0;
-    const arrowRotation = targetAngle; 
+    // Compass & Arrow Rotation Logic
+    const [smoothCompassRotation, setSmoothCompassRotation] = useState(0);
+    const [smoothArrowRotation, setSmoothArrowRotation] = useState(0);
+    
+    const compassRotationRef = useRef(0);
+    const targetCompassRotationRef = useRef(0);
+    
+    const arrowRotationRef = useRef(0);
+    const targetArrowRotationRef = useRef(0);
+    
+    const animationFrameRef = useRef<number | null>(null);
+
+    // Update Compass Target
+    useEffect(() => {
+        if (heading !== null) {
+            const target = -heading;
+            const current = compassRotationRef.current;
+            
+            // Calculate shortest path for rotation
+            let diff = target - (current % 360);
+            // Normalize diff to -180 to 180
+            // JS modulo can be negative, so we normalize to 0-360 first to be safe or handle it
+            // Actually: (target - (current % 360) + 540) % 360 - 180 is a robust way
+            // But simple way:
+            while (diff > 180) diff -= 360;
+            while (diff < -180) diff += 360;
+            
+            targetCompassRotationRef.current = current + diff;
+        }
+    }, [heading]);
+
+    // Update Arrow Target
+    useEffect(() => {
+        // Lucide Navigation icon points 45 degrees (NE) by default.
+        // We need to subtract 45 degrees so that 0 degrees rotation points North (Up).
+        const target = targetAngle - 45;
+        const current = arrowRotationRef.current;
+        
+        let diff = target - (current % 360);
+        while (diff > 180) diff -= 360;
+        while (diff < -180) diff += 360;
+        
+        targetArrowRotationRef.current = current + diff;
+    }, [targetAngle]);
+
+    // Animation Loop
+    useEffect(() => {
+        const animate = () => {
+            // Compass Smoothing
+            const currentCompass = compassRotationRef.current;
+            const targetCompass = targetCompassRotationRef.current;
+            const diffCompass = targetCompass - currentCompass;
+            
+            if (Math.abs(diffCompass) > 0.01) {
+                const nextCompass = currentCompass + diffCompass * 0.15;
+                compassRotationRef.current = nextCompass;
+                setSmoothCompassRotation(nextCompass);
+            }
+
+            // Arrow Smoothing
+            const currentArrow = arrowRotationRef.current;
+            const targetArrow = targetArrowRotationRef.current;
+            const diffArrow = targetArrow - currentArrow;
+            
+            if (Math.abs(diffArrow) > 0.01) {
+                const nextArrow = currentArrow + diffArrow * 0.2;
+                arrowRotationRef.current = nextArrow;
+                setSmoothArrowRotation(nextArrow);
+            }
+
+            animationFrameRef.current = requestAnimationFrame(animate);
+        };
+        
+        animationFrameRef.current = requestAnimationFrame(animate);
+        return () => {
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        }
+    }, []); 
 
     return (
         <motion.div
@@ -137,7 +212,7 @@ export default function Navigation({ car }: NavigationProps) {
             className="flex-1 flex flex-col h-full pb-4 gap-4"
         >
             {/* Compass Box */}
-            <div className="bg-zinc-900 rounded-2xl py-6 border border-zinc-800 flex flex-col items-center justify-center shrink-0 shadow-lg relative overflow-hidden">
+            <div className="bg-zinc-900 rounded-2xl py-4 border border-zinc-800 flex flex-row items-center justify-center shrink-0 shadow-lg relative overflow-hidden gap-12">
                  {permissionState === 'prompt' && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                         <button 
@@ -150,38 +225,36 @@ export default function Navigation({ car }: NavigationProps) {
                  )}
                  
                  <div 
-                    className="w-40 h-40 rounded-full border-2 border-zinc-800 flex items-center justify-center relative bg-black/20 shadow-inner transition-transform duration-300 ease-out"
-                    style={{ transform: `rotate(${compassRotation}deg)` }}
+                    className="w-32 h-32 rounded-full border-2 border-zinc-800 flex items-center justify-center relative bg-black/20 shadow-inner"
+                    style={{ transform: `rotate(${smoothCompassRotation}deg)` }}
                  >
                      {/* North Marker */}
                      <div className="absolute -top-1 w-2 h-5 bg-sixt-orange rounded-full shadow-[0_0_10px_#ff5f00]"></div>
                      
                      {/* Inner Circle */}
-                     <div className="w-32 h-32 rounded-full border border-zinc-700/50 flex flex-col items-center justify-center relative">
+                     <div className="w-24 h-24 rounded-full border border-zinc-700/50 flex flex-col items-center justify-center relative">
                         {/* Arrow pointing to target */}
                         <div 
-                            className="absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-out"
-                            style={{ transform: `rotate(${arrowRotation}deg)` }}
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{ transform: `rotate(${smoothArrowRotation}deg)` }}
                         >
-                             <NavigationIcon className="w-8 h-8 text-sixt-orange drop-shadow-[0_0_8px_rgba(255,95,0,0.8)]" />
-                        </div>
-                        
-                        {/* Text Container - Counter rotate to keep upright */}
-                        <div 
-                            className="flex flex-col items-center justify-center z-10 bg-zinc-900/80 rounded-full w-20 h-20 backdrop-blur-sm"
-                            style={{ transform: `rotate(${-compassRotation}deg)` }}
-                        >
-                            <div className="text-2xl font-bold text-white tracking-tighter">
-                                {distance !== null ? Math.round(distance) : '---'}
-                                <span className="text-xs text-zinc-500 font-normal ml-1">m</span>
-                            </div>
+                             <NavigationIcon className="w-12 h-12 text-sixt-orange drop-shadow-[0_0_10px_rgba(255,95,0,0.8)] fill-sixt-orange/20" />
                         </div>
                      </div>
+                </div>
+
+                {/* Distance Display */}
+                <div className="flex flex-col items-start justify-center z-10">
+                    <div className="text-5xl font-bold text-white tracking-tighter">
+                        {distance !== null ? Math.round(distance) : '---'}
+                        <span className="text-lg text-zinc-500 font-normal ml-1">m</span>
+                    </div>
+                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">to target</div>
                 </div>
             </div>
 
             {/* Map Area */}
-            <div className="flex-1 bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 relative min-h-0 shadow-lg">
+            <div className="w-full h-80 bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 relative shadow-lg shrink-0">
                 <ParkingNavigator 
                     carLocation={targetPosition}
                     userLocation={userLocation}
