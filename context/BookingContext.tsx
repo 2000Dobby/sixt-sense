@@ -2,14 +2,11 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { BookingState, Car, UpgradeOffer } from '@/types';
-import { mockApi } from '@/services/mockApi';
 import { api } from '@/services/api';
-
-const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API !== 'false';
 
 interface BookingContextType extends BookingState {
     setStep: (step: number) => void;
-    loadBooking: () => Promise<void>;
+    loadBooking: (personaId?: string) => Promise<void>;
     acceptUpgrade: () => Promise<void>;
     rejectUpgrade: () => void;
     unlockCar: (carOverride?: Car, successMessage?: string) => Promise<void>;
@@ -53,13 +50,21 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         setState(prev => ({ ...prev, availableOffer: offer }));
     };
 
-    const loadBooking = async () => {
+    const loadBooking = async (personaIdFromParam?: string) => {
         setState(prev => ({ ...prev, isLoading: true }));
         try {
-            const data = USE_MOCK_API 
-                ? await mockApi.fetchBookingDetails()
-                : await api.fetchBookingDetails("987654321"); // TODO: Get real ID from URL/Auth
-                
+            const bookingId = state.bookingId || "987654321";
+            let data;
+            
+            // Get personaId from URL if not explicitly passed (for initial load)
+            let currentPersonaId = personaIdFromParam;
+            if (!currentPersonaId && typeof window !== 'undefined') {
+                const params = new URLSearchParams(window.location.search);
+                currentPersonaId = params.get('personaId') || undefined;
+            }
+
+            data = await api.fetchBookingDetails(bookingId, currentPersonaId);
+            
             setState(prev => ({
                 ...prev,
                 bookingId: data.bookingId,
@@ -79,9 +84,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         
         setState(prev => ({ ...prev, isLoading: true }));
         try {
-            const success = USE_MOCK_API
-                ? await mockApi.postUpgrade(state.availableOffer.id)
-                : await api.postUpgrade(state.bookingId || "987654321", state.availableOffer.id);
+            const success = await api.postUpgrade(state.bookingId || "987654321", state.availableOffer.id);
 
             if (success && state.availableOffer.car) {
                 setState(prev => ({
@@ -109,9 +112,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
         setState(prev => ({ ...prev, isLoading: true }));
         try {
-            const success = USE_MOCK_API
-                ? await mockApi.postUnlock(carToUnlock.id)
-                : await api.postUnlock(carToUnlock.id);
+            const success = await api.postUnlock(carToUnlock.id);
 
             if (success) {
                 setState(prev => ({
@@ -141,7 +142,12 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
     // Load booking data on mount
     useEffect(() => {
-        loadBooking();
+        // Check for personaId in URL query params
+        const params = new URLSearchParams(window.location.search);
+        const personaId = params.get("personaId") || undefined;
+        
+        // IMPORTANT: Always load, even if no persona param (will default or use existing bookingId)
+        loadBooking(personaId);
     }, []);
 
     return (

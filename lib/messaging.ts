@@ -1,6 +1,6 @@
 import type { Persona, UserTag } from "@/lib/personas";
-import type { Vehicle } from "@/lib/sixtApi";
-import type { CarTag } from "@/lib/tagging";
+import type { Vehicle, ProtectionPackage } from "@/lib/sixtApi";
+import type { CarTag, ProtectionTag } from "@/lib/tagging";
 import { getGeminiModel } from "@/lib/vertex";
 
 export interface UpsellMessage {
@@ -36,7 +36,7 @@ function getVehicleDisplayName(vehicle: Vehicle): string {
   );
 }
 
-// --- 2) Formal, rule-based explanation ---
+// --- 2) Formal, rule-based explanation (CAR) ---
 
 export function buildCarUpgradeExplanationFormal(
   persona: Persona,
@@ -133,6 +133,67 @@ export function buildCarUpgradeExplanationFormal(
   return sentence;
 }
 
+// --- 2.5) Formal, rule-based explanation (PROTECTION) ---
+
+export function buildProtectionExplanationFormal(
+    persona: Persona,
+    userTags: UserTag[],
+    protection: ProtectionPackage,
+    protectionTags: ProtectionTag[]
+  ): string {
+    const reasons: string[] = [];
+  
+    const hasTag = (tag: ProtectionTag) => protectionTags.includes(tag);
+  
+    if (hasTag("roadside_assistance")) {
+        if (persona.tripPurpose === "business") {
+            reasons.push("guaranteed reliability so you never miss a meeting");
+        } else {
+            reasons.push("peace of mind on the road with 24/7 assistance");
+        }
+    }
+  
+    if (hasTag("glass_protection") || hasTag("tyre_protection")) {
+        if (persona.drivingStyle === "sporty") {
+            reasons.push("coverage for tyres and glass, letting you enjoy the drive worry-free");
+        } else {
+            reasons.push("protection against common minor damages like glass chips or flat tyres");
+        }
+    }
+  
+    if (hasTag("full_coverage")) {
+        if (persona.riskAttitude === "risk_averse" || persona.groupType === "family") {
+            reasons.push("maximum safety and zero deductible for a completely stress-free trip");
+        } else {
+            reasons.push("comprehensive coverage so you have zero liability");
+        }
+    }
+
+    if (protection.name.toLowerCase().includes("interior")) {
+        if (persona.tripPurpose === "moving") {
+            reasons.push("worry-free transport without stressing about scratches or spills inside");
+        } else {
+            reasons.push("coverage for any accidental damage to the vehicle interior");
+        }
+    }
+  
+    if (reasons.length === 0) {
+      reasons.push("essential protection for your trip");
+    }
+  
+    const mainReason = reasons[0];
+  
+    if (persona.tripPurpose === "moving") {
+        return `Since you are moving, this package offers ${mainReason}.`;
+    } else if (persona.tripPurpose === "business") {
+        return `To ensure a smooth business trip, this protection provides ${mainReason}.`;
+    } else if (persona.groupType === "family") {
+        return `For your family's safety, this coverage ensures ${mainReason}.`;
+    }
+  
+    return `For your peace of mind, this package provides ${mainReason}.`;
+  }
+
 // --- 3) Vertex AI (Gemini) integration ---
 
 // Using the existing helper from lib/vertex.ts instead of creating a new client instance manually
@@ -210,6 +271,60 @@ export async function refineCarUpgradeExplanationWithLLM(
   // Fallback
   return formalExplanation;
 }
+
+export async function refineProtectionExplanationWithLLM(
+    persona: Persona,
+    userTags: UserTag[],
+    protection: ProtectionPackage,
+    protectionTags: ProtectionTag[],
+    formalExplanation: string
+  ): Promise<string> {
+    if (process.env.USE_VERTEX_LLM === "false") {
+      return formalExplanation;
+    }
+  
+    const personaSummary = [
+      `Label: ${persona.label}`,
+      `Trip purpose: ${persona.tripPurpose}`,
+      `Risk attitude: ${persona.riskAttitude}`,
+      `Driving style: ${persona.drivingStyle}`,
+    ].join("; ");
+  
+    const tagsSummary = protectionTags.join(", ");
+    
+    const prompt = [
+      "You are helping a rental car customer understand why a protection package is recommended.",
+      "",
+      "Customer persona:",
+      personaSummary,
+      "",
+      `Protection Package: ${protection.name}`,
+      `Description: ${protection.description}`,
+      `Protection Tags: ${tagsSummary}`,
+      "",
+      "Internal reasoning:",
+      formalExplanation,
+      "",
+      "Task: Write 1–2 short, friendly sentences explaining why this protection is smart for this specific customer's trip.",
+      "- Focus on peace of mind, safety, or convenience relevant to their trip type (e.g. moving, business, family).",
+      "- Do not mention 'persona' or technical tags.",
+      "- Keep it concise and natural.",
+    ].join("\n");
+  
+    try {
+      const model = getGeminiModel(DEFAULT_VERTEX_MODEL_ID);
+      const result = await model.generateContent(prompt);
+      const text = result.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+  
+      if (typeof text === "string" && text.trim().length > 0) {
+        return text.trim();
+      }
+    } catch (err) {
+      console.error("Error calling Vertex AI for protection explanation:", err);
+    }
+  
+    return formalExplanation;
+  }
 
 // --- 4) Build a full car-upgrade message ---
 
@@ -293,3 +408,45 @@ export async function buildCarUpgradeMessage(
   };
 }
 
+export async function buildProtectionMessage(
+    persona: Persona,
+    userTags: UserTag[],
+    protection: ProtectionPackage,
+    protectionTags: ProtectionTag[]
+): Promise<UpsellMessage> {
+    const formalExplanation = buildProtectionExplanationFormal(
+        persona,
+        userTags,
+        protection,
+        protectionTags
+    );
+
+    const llmExplanation = await refineProtectionExplanationWithLLM(
+        persona,
+        userTags,
+        protection,
+        protectionTags,
+        formalExplanation
+    );
+
+    let headline = "Recommended for your trip";
+    if (persona.tripPurpose === "moving") headline = "Protect your move";
+    else if (persona.tripPurpose === "business") headline = "Travel without worries";
+    else if (persona.groupType === "family") headline = "Maximum safety for your family";
+
+    const bullets: string[] = [];
+    if (protectionTags.includes("roadside_assistance")) bullets.push("24/7 Roadside Assistance");
+    if (protectionTags.includes("glass_protection")) bullets.push("Glass & Windscreen Cover");
+    if (protectionTags.includes("tyre_protection")) bullets.push("Tyre Damage Cover");
+    if (protectionTags.includes("full_coverage")) bullets.push("Zero Deductible");
+
+    if (bullets.length === 0) bullets.push("Essential Coverage");
+
+    return {
+        type: "protection",
+        headline,
+        bullets: bullets.slice(0, 3),
+        formalExplanation,
+        llmExplanation
+    };
+}

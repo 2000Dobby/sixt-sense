@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Car as CarIcon, ShieldCheck, ArrowRight, Shield } from "lucide-react";
+import { Car as CarIcon, ShieldCheck, ArrowRight, Shield, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { Car, UpgradeOffer } from "@/types";
 import UnlockSlider from "./misc/UnlockSlider";
@@ -13,6 +13,8 @@ interface VehicleSelectionProps {
     upgradeDistance?: string;
 }
 
+import { useState } from "react";
+
 export default function VehicleSelection({ 
     currentCar, 
     offer, 
@@ -23,6 +25,9 @@ export default function VehicleSelection({
     const { isLoading } = useBooking();
     const isProtectionOnly = offer.type === 'PROTECTION';
     const hasCar = offer.type === 'CAR_UPGRADE';
+
+    const [imgError, setImgError] = useState(false);
+    const [upgradeImgError, setUpgradeImgError] = useState(false);
 
     return (
         <motion.div
@@ -46,36 +51,47 @@ export default function VehicleSelection({
                         <div className="text-xs text-zinc-500">{distance} away</div>
                     </div>
                 </div>
-                <div className="h-32 bg-zinc-800 rounded-xl flex items-center justify-center mb-2 overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
-                    <Image 
-                        src={currentCar.image} 
-                        alt={currentCar.model}
-                        fill
-                        className="object-contain p-2 relative z-10 scale-[1.75]"
-                    />
+                <div className="h-28 bg-zinc-800 rounded-xl flex items-center justify-center mb-2 overflow-hidden relative">
+                    <div className="absolute inset-0 bg-linear-to-br from-zinc-800 to-zinc-900" />
+                    {!imgError && currentCar.image ? (
+                        <Image 
+                            src={currentCar.image} 
+                            alt={currentCar.model}
+                            fill
+                            className="object-contain p-2 relative z-10"
+                            onError={() => setImgError(true)}
+                        />
+                    ) : (
+                        <CarIcon className="w-16 h-16 text-zinc-600" />
+                    )}
                 </div>
             </div>
 
             {/* Upgrade Card */}
-            <div className="flex-1 bg-gradient-to-br from-zinc-900 to-zinc-950 rounded-2xl p-5 border border-sixt-orange/30 shadow-lg relative overflow-hidden flex flex-col min-h-0">
+            <div className="flex-1 bg-linear-to-br from-zinc-900 to-zinc-950 rounded-2xl p-5 border border-sixt-orange/30 shadow-lg relative overflow-hidden flex flex-col min-h-0">
                 <div className="absolute top-0 right-0 bg-sixt-orange text-black text-[10px] font-bold px-3 py-1 rounded-bl-xl z-20 tracking-widest">
                     UPGRADE
                 </div>
                 
                 <div className="flex justify-between items-start mb-2 shrink-0">
-                    <div>
+                    <div className="max-w-[70%]">
                         <h3 className="text-sixt-orange text-sm uppercase tracking-wider font-bold">{offer.title}</h3>
-                        <h2 className="text-2xl font-bold text-white">
-                            {hasCar ? offer.car?.model : offer.description}
+                        <h2 className="text-2xl font-bold text-white leading-tight my-1">
+                            {hasCar ? offer.car?.model : offer.subtitle}
                         </h2>
-                        <p className="text-zinc-400 text-sm">
-                            {hasCar ? offer.car?.category : offer.subtitle}
-                        </p>
+                        {/* Explanation text from recommendation engine */}
+                        {offer.description && (
+                            <div className="flex gap-2 mt-2">
+                                <Sparkles className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+                                <p className="text-xs text-zinc-300 leading-relaxed italic">
+                                    "{offer.description}"
+                                </p>
+                            </div>
+                        )}
                     </div>
                     
                     {hasCar && (
-                        <div className="flex flex-col items-end pt-4">
+                        <div className="flex flex-col items-end pt-1">
                             <CarIcon className="text-sixt-orange w-8 h-8 mb-2" />
                             <div className="text-sm font-bold text-white">{offer.car?.spot || "Spot: #--"}</div>
                             <div className="text-xs text-zinc-500">{upgradeDistance} away</div>
@@ -85,15 +101,18 @@ export default function VehicleSelection({
 
                 {/* Dynamic Content Area */}
                 {hasCar && (
-                    <div className="flex-1 min-h-0 flex items-center justify-center my-2 relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/50 to-transparent rounded-xl" />
-                        {offer.car?.image && (
+                    <div className="h-44 shrink-0 flex items-center justify-center my-2 relative overflow-hidden rounded-xl">
+                        <div className="absolute inset-0 bg-linear-to-br from-zinc-800/50 to-transparent" />
+                        {!upgradeImgError && offer.car?.image ? (
                             <Image 
                                 src={offer.car.image} 
                                 alt={offer.car.model}
                                 fill
-                                className="object-contain p-4 relative z-10 scale-[1.75]"
+                                className="object-contain p-2 relative z-10"
+                                onError={() => setUpgradeImgError(true)}
                             />
+                        ) : (
+                             <CarIcon className="w-16 h-16 text-zinc-600" />
                         )}
                     </div>
                 )}
@@ -110,8 +129,8 @@ export default function VehicleSelection({
                 <div className="mt-auto shrink-0">
                     <UnlockSlider 
                         onUnlock={onUpgradeClick} 
-                        label={`Slide to upgrade for +${offer.price}€/day`}
-                        successLabel="Upgraded"
+                        label={`Slide to ${hasCar ? 'upgrade' : 'add'} for +${offer.price.toFixed(2)}€/day`}
+                        successLabel={hasCar ? "Upgraded" : "Added"}
                         isLoading={isLoading}
                     />
                 </div>

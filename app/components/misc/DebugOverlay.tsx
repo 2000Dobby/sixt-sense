@@ -1,9 +1,38 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useBooking } from "@/context/BookingContext";
-import { MapPin, RotateCcw, Package, Shield, Car } from "lucide-react";
-import { mockOffers } from "@/services/mockApi";
+import { MapPin, RotateCcw, Package, Shield, Car as CarIcon } from "lucide-react";
 import clsx from "clsx";
+import { UpgradeOffer } from "@/types";
+
+const mockOffers = {
+    car: {
+        id: "debug-car",
+        type: 'CAR_UPGRADE',
+        title: "Upgrade to BMW X5",
+        description: "Enjoy more space and luxury.",
+        price: 25,
+        car: {
+            id: "debug-x5",
+            model: "BMW X5",
+            licensePlate: "M-DB 1234",
+            image: "/images/cars/bmw-x5.png",
+            category: "SUV",
+            features: ["GPS", "Leather"],
+            spot: "P-205"
+        },
+        benefits: ["More Space", "Premium Sound"]
+    } as UpgradeOffer,
+    protection: {
+        id: "debug-prot",
+        type: 'PROTECTION',
+        title: "Full Protection",
+        description: "Zero worry.",
+        subtitle: "Peace of Mind",
+        price: 15,
+        benefits: ["No Deductible", "Glass & Tire"]
+    } as UpgradeOffer
+};
 
 export default function DebugOverlay() {
     const [isVisible, setIsVisible] = useState(false);
@@ -40,7 +69,7 @@ export default function DebugOverlay() {
                                 <div className="font-bold text-gray-400 mb-2 uppercase text-xs tracking-wider">Set Offer Type</div>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button onClick={() => setDebugOffer(mockOffers.car)} className="p-2 bg-zinc-800 rounded hover:bg-zinc-700 flex flex-col items-center gap-1 text-[10px] text-zinc-400">
-                                        <Car className="w-4 h-4" /> Car
+                                        <CarIcon className="w-4 h-4" /> Car
                                     </button>
                                     <button onClick={() => setDebugOffer(mockOffers.protection)} className="p-2 bg-zinc-800 rounded hover:bg-zinc-700 flex flex-col items-center gap-1 text-[10px] text-zinc-400">
                                         <Shield className="w-4 h-4" /> Prot

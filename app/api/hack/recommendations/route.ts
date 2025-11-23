@@ -19,6 +19,20 @@ export async function GET(req: NextRequest) {
 
     const recommendations = await getRecommendationsForBooking(bookingId, personaId, vehicleId);
 
+    // --- Debug Logging ---
+    console.log("--- [Recommendation Engine] ---");
+    console.log(`Booking ID: ${bookingId}`);
+    console.log(`Persona Detected: ${recommendations.persona.label} (${recommendations.persona.id})`);
+    console.log(`User Tags: ${recommendations.userTags.join(", ")}`);
+    console.log(`Best Car Offer: ${recommendations.bestCarOffer ? `${recommendations.bestCarOffer.toVehicle.brand} ${recommendations.bestCarOffer.toVehicle.model}` : "None"}`);
+    if (recommendations.bestCarOffer) {
+        console.log(`   -> Reason: ${recommendations.bestCarOffer.message.headline}`);
+        console.log(`   -> Price Diff: +${recommendations.bestCarOffer.priceDifference}`);
+    }
+    console.log(`Primary Offer Type: ${recommendations.primaryOfferType}`);
+    console.log("-------------------------------");
+    // ---------------------
+
     return NextResponse.json({
       bookingId,
       createdNewBooking,
@@ -32,4 +46,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-

@@ -38,6 +38,7 @@ export const CAR_TAGS: CarTag[] = [
   "suv",
   "wagon",
   "van",
+  "utility", // Added utility tag
   "7_seats",
   "automatic",
   "manual",
@@ -102,14 +103,33 @@ export function getCarTags(vehicle: Vehicle): CarTag[] {
   const acriss = (vehicle.acrissCode || "").toLowerCase();
 
   // Body Type & Size
-  if (group.includes("suv") || acriss.includes("f") || acriss.includes("j")) tags.push("suv");
-  if (group.includes("sedan") || group.includes("limousine")) tags.push("sedan");
-  if (group.includes("wagon") || group.includes("estate") || acriss.includes("w")) tags.push("wagon");
-  if (group.includes("convertible") || acriss.includes("t")) tags.push("convertible");
-  if (group.includes("van") || (vehicle.seats && vehicle.seats >= 7)) {
-    tags.push("van", "7_seats", "needs_spacious");
+  // Combine group and groupType for broader matching
+  const combinedGroup = (group + " " + (typeof vehicle.group === 'string' ? vehicle.group.toLowerCase() : "")).trim();
+
+  if (combinedGroup.includes("suv") || acriss.includes("f") || acriss.includes("j")) tags.push("suv");
+  if (combinedGroup.includes("sedan") || combinedGroup.includes("limousine")) tags.push("sedan");
+  if (combinedGroup.includes("wagon") || combinedGroup.includes("estate") || acriss.includes("w")) tags.push("wagon");
+  if (combinedGroup.includes("convertible") || acriss.includes("t")) tags.push("convertible");
+  
+  // Van / Utility Logic
+  if (combinedGroup.includes("van") || combinedGroup.includes("truck") || (vehicle.seats && vehicle.seats >= 7) || acriss.startsWith("f") || acriss.startsWith("v")) {
+    tags.push("van", "needs_spacious");
+    if (vehicle.seats && vehicle.seats >= 7) tags.push("7_seats");
+
+    // Utility/Commercial check
+    if (
+      combinedGroup.includes("panel") || 
+      combinedGroup.includes("cargo") || 
+      combinedGroup.includes("special") ||
+      combinedGroup.includes("truck") ||
+      acriss.startsWith("f") || // FKAG is typical for trucks/transporters
+      acriss.startsWith("v")
+    ) {
+        tags.push("utility");
+    }
   }
-  if (group.includes("compact") || group.includes("economy") || group.includes("mini")) {
+  
+  if (combinedGroup.includes("compact") || combinedGroup.includes("economy") || combinedGroup.includes("mini")) {
     tags.push("compact", "city_friendly");
   }
   

@@ -1,7 +1,8 @@
 import type { UpsellDataSource, BookingSummary } from "./dataSource";
 import type { Vehicle, ProtectionPackage, Addon } from "@/lib/sixtApi";
 
-// Minimal demo vehicles
+// Minimal demo vehicles with local image paths
+// Ideally, place these images in public/images/cars/
 const DEMO_VEHICLES: Vehicle[] = [
   {
     id: "demo-suv-family",
@@ -13,7 +14,7 @@ const DEMO_VEHICLES: Vehicle[] = [
     seats: 7,
     fuelType: "Petrol",
     transmission: "Automatic",
-    imageUrl: "https://www.sixt.com/fileadmin/files/global/user_upload/fleet/png/350x200/audi-q7-5d-grau-2020.png",
+    imageUrl: "/images/cars/audi-q7.png",
     price: 120,
     currency: "EUR",
   } as Vehicle,
@@ -27,7 +28,7 @@ const DEMO_VEHICLES: Vehicle[] = [
     seats: 5,
     fuelType: "Petrol",
     transmission: "Automatic",
-    imageUrl: "https://www.sixt.com/fileadmin/files/global/user_upload/fleet/png/350x200/bmw-5er-limousine-4d-schwarz-2020.png",
+    imageUrl: "/images/cars/bmw-5-series.png",
     price: 105,
     currency: "EUR",
   } as Vehicle,
@@ -41,7 +42,7 @@ const DEMO_VEHICLES: Vehicle[] = [
     seats: 4,
     fuelType: "EV",
     transmission: "Automatic",
-    imageUrl: "https://www.sixt.com/fileadmin/files/global/user_upload/fleet/png/350x200/vw-id3-5d-weiss-2020.png",
+    imageUrl: "/images/cars/vw-id3.png",
     price: 75,
     currency: "EUR",
   } as Vehicle,
@@ -55,8 +56,78 @@ const DEMO_VEHICLES: Vehicle[] = [
     seats: 4,
     fuelType: "Petrol",
     transmission: "Automatic",
-    imageUrl: "https://www.sixt.com/fileadmin/files/global/user_upload/fleet/png/350x200/bmw-4er-cabrio-2d-schwarz-2021.png",
+    imageUrl: "/images/cars/bmw-4-convertible.png",
     price: 140,
+    currency: "EUR",
+  } as Vehicle,
+  {
+    id: "demo-sport-coupe",
+    model: "M4 Competition",
+    brand: "BMW",
+    group: "Coupe",
+    groupType: "Luxury",
+    acrissCode: "LSAR",
+    seats: 4,
+    fuelType: "Petrol",
+    transmission: "Automatic",
+    imageUrl: "/images/cars/bmw-m4.png",
+    price: 160,
+    currency: "EUR",
+  } as Vehicle,
+  {
+    id: "demo-budget-city",
+    model: "Corsa",
+    brand: "Opel",
+    group: "Economy",
+    groupType: "Economy",
+    acrissCode: "ECAR",
+    seats: 5,
+    fuelType: "Petrol",
+    transmission: "Manual",
+    imageUrl: "/images/cars/opel-corsa.webp",
+    price: 50,
+    currency: "EUR",
+  } as Vehicle,
+  {
+    id: "demo-van-mover",
+    model: "Sprinter",
+    brand: "Mercedes-Benz",
+    group: "Van",
+    groupType: "Special",
+    acrissCode: "FKAG",
+    seats: 3,
+    fuelType: "Diesel",
+    transmission: "Manual",
+    imageUrl: "/images/cars/mb-sprinter.png",
+    price: 90,
+    currency: "EUR",
+  } as Vehicle,
+  {
+    id: "demo-estate-wagon",
+    model: "Passat Variant",
+    brand: "Volkswagen",
+    group: "Wagon",
+    groupType: "Standard",
+    acrissCode: "SWAR",
+    seats: 5,
+    fuelType: "Diesel",
+    transmission: "Automatic",
+    imageUrl: "/images/cars/vw-passat.webp",
+    price: 85,
+    currency: "EUR",
+  } as Vehicle,
+  {
+    id: "demo-luxury-suv",
+    model: "X5",
+    brand: "BMW",
+    group: "SUV",
+    groupType: "Luxury",
+    acrissCode: "LFAR",
+    seats: 5,
+    fuelType: "Diesel",
+    transmission: "Automatic",
+    imageUrl: "/images/cars/bmw-x5.png",
+    price: 130,
     currency: "EUR",
   } as Vehicle,
 ];
@@ -81,6 +152,20 @@ const DEMO_PROTECTIONS: ProtectionPackage[] = [
     name: "Glass & Tyre Protection",
     description: "Covers damage to windscreen and tyres.",
     price: 10,
+    currency: "EUR",
+  } as ProtectionPackage,
+  {
+    id: "demo-roadside",
+    name: "Roadside Assistance",
+    description: "24/7 breakdown service and towing.",
+    price: 8,
+    currency: "EUR",
+  } as ProtectionPackage,
+  {
+    id: "demo-interior",
+    name: "Interior Protection",
+    description: "Covers cleaning and minor damage to the interior.",
+    price: 5,
     currency: "EUR",
   } as ProtectionPackage,
 ];
@@ -111,17 +196,16 @@ const DEMO_ADDONS: Addon[] = [
 
 const mockBookings = new Map<string, BookingSummary>();
 
-function createRandomBooking(): BookingSummary {
+function createRandomBooking(forceStartCategory?: string): BookingSummary {
   const id = `demo-${Math.random().toString(36).slice(2, 8)}`;
   
-  // Randomly pick a booked category from our available cars
-  const categories = ["CCAE", "PDAR", "XFAR", "LTAR"];
-  const bookedCategory = categories[Math.floor(Math.random() * categories.length)];
+  // By default, always start with ECAR to ensure upgrade potential for everyone
+  // unless specifically overridden
+  const bookedCategory = forceStartCategory || "ECAR";
 
   const booking: BookingSummary = {
     id,
     bookedCategory,
-    // Simulate real fields
     pickupLocation: "HackaTUM Campus",
     durationDays: 3,
     status: "booking",
@@ -133,18 +217,17 @@ function createRandomBooking(): BookingSummary {
 
 export const mockDataSource: UpsellDataSource = {
   async createBooking(): Promise<BookingSummary> {
-    return createRandomBooking();
+    // FORCE ECAR (Opel Corsa) as starting car for consistent demos
+    return createRandomBooking("ECAR");
   },
 
   async getBooking(bookingId: string): Promise<BookingSummary> {
     const existing = mockBookings.get(bookingId);
     if (existing) return existing;
-    // If unknown id, just create a new booking for convenience
-    return createRandomBooking();
+    return createRandomBooking("ECAR");
   },
 
   async getAvailableVehicles(_bookingId: string): Promise<Vehicle[]> {
-    // For now, we ignore bookingId and always return the same demo set
     return DEMO_VEHICLES;
   },
 
@@ -156,4 +239,3 @@ export const mockDataSource: UpsellDataSource = {
     return DEMO_ADDONS;
   },
 };
-

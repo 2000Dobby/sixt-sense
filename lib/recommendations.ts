@@ -1,4 +1,4 @@
-import { buildCarUpgradeMessage, type CarUpgradeOffer } from "@/lib/messaging";
+import { buildCarUpgradeMessage, buildProtectionMessage, type CarUpgradeOffer, type UpsellMessage } from "@/lib/messaging";
 import { dataSource } from "@/lib/dataSource.current";
 import { getPersonaForBooking, type Persona, type UserTag } from "@/lib/personas";
 import {
@@ -34,7 +34,7 @@ export type PrimaryOfferType = "car" | "protection" | "both" | "none";
 
 export type FinalOffer =
   | { type: "car"; car: ScoredVehicle }
-  | { type: "protection"; protection: ScoredProtection }
+  | { type: "protection"; protection: ScoredProtection; message?: UpsellMessage }
   | { type: "none"; reason: string };
 
 export interface RecommendationResult {
@@ -46,6 +46,7 @@ export interface RecommendationResult {
   protectionCandidates: ScoredProtection[]; // sorted by totalScore desc
   primaryOfferType: PrimaryOfferType;
   bestCarOffer?: CarUpgradeOffer;
+  currentVehicle?: Vehicle;
   finalOffer: FinalOffer;
 }
 
@@ -274,7 +275,7 @@ function getPersonaProtectionBias(persona: Persona): number {
 
 // --- 3. Scoring a single vehicle ---
 
-function scoreVehicleForUser(
+export function scoreVehicleForUser(
   persona: Persona,
   userTags: UserTag[],
   vehicle: Vehicle
@@ -333,6 +334,18 @@ function scoreVehicleForUser(
 
   // Weights
   const weights = getVehicleScoreWeights(persona);
+  
+  // Utility Vehicle Check
+  // If it's a utility vehicle (cargo van), only recommend if the persona explicitly needs it (moving, heavy luggage)
+  let utilityPenalty = 0;
+  if (tags.includes("utility") || tags.includes("van")) {
+      // Stricter check: only recommend utility vans for moving or large groups (7+ people)
+      // Heavy luggage alone shouldn't trigger a cargo van recommendation over a wagon/SUV
+      const needsUtility = persona.tripPurpose === "moving" || userTags.includes("large_group");
+      if (!needsUtility) {
+          utilityPenalty = 5.0; // Massive penalty to prevent recommending Sprinters to consultants/families
+      }
+  }
 
   const totalScore =
     weights.wTagMatch * matchScore +
@@ -341,7 +354,8 @@ function scoreVehicleForUser(
     weights.wBrandPremium * brandPremium +
     weights.wCategoryMatch * categoryMatch -
     weights.wPricePenalty * pricePenalty -
-    weights.wDistancePenalty * distancePenalty;
+    weights.wDistancePenalty * distancePenalty - 
+    utilityPenalty;
 
   return {
     vehicle,
@@ -367,13 +381,43 @@ function scoreProtectionForUser(
   const tags = getProtectionTags(protection);
   
   let riskCoverageScore = 0;
-  if (tags.includes("full_coverage")) riskCoverageScore += 3;
+  // Base scores
+  if (tags.includes("full_coverage")) riskCoverageScore += 2;
   if (tags.includes("glass_protection")) riskCoverageScore += 1;
   if (tags.includes("tyre_protection")) riskCoverageScore += 1;
   if (tags.includes("roadside_assistance")) riskCoverageScore += 1;
   
+  // Persona Adjustments
+  
+  // 1. Risk Attitude
   if (persona.riskAttitude === "risk_averse") {
-    riskCoverageScore += 1;
+    // Heavily favor comprehensive coverage
+    if (tags.includes("full_coverage")) riskCoverageScore += 2;
+    if (tags.includes("glass_protection")) riskCoverageScore += 1;
+  } else if (persona.riskAttitude === "risk_taker") {
+    // Penalize full coverage slightly as unnecessary upsell
+    if (tags.includes("full_coverage")) riskCoverageScore -= 1;
+    // Prefer targeted/cheaper options
+    if (tags.includes("glass_protection")) riskCoverageScore += 0.5;
+  }
+
+  // 2. Trip Purpose
+  if (persona.tripPurpose === "business") {
+    // Business travelers value reliability -> Roadside is key
+    if (tags.includes("roadside_assistance")) riskCoverageScore += 2;
+  } else if (persona.tripPurpose === "moving" || userTags.includes("heavy_luggage")) {
+    // Movers worry about interior damage or minor scrapes
+    if (protection.name.toLowerCase().includes("interior")) riskCoverageScore += 3;
+    if (tags.includes("basic_coverage")) riskCoverageScore += 1;
+  } else if (persona.tripPurpose === "vacation" && persona.groupType === "family") {
+     // Family trips want peace of mind but maybe budget conscious
+     if (tags.includes("full_coverage")) riskCoverageScore += 1;
+  }
+
+  // 3. Driving Style
+  if (persona.drivingStyle === "sporty") {
+    // Sporty drivers might worry about tyres/rims
+    if (tags.includes("tyre_protection")) riskCoverageScore += 2;
   }
 
   const pricePenalty = pricePenaltyForProtection(protection, persona);
@@ -558,7 +602,7 @@ export async function getRecommendationsForBooking(
   const carOk = offerScoreCar >= MIN_SCORE;
   const protectionOk = offerScoreProtection >= MIN_SCORE;
 
-  const finalOffer = decideFinalOffer(
+  let finalOffer = decideFinalOffer(
     persona,
     bestCar,
     offerScoreCar,
@@ -567,6 +611,17 @@ export async function getRecommendationsForBooking(
     offerScoreProtection,
     protectionOk
   );
+
+  // --- ENRICH PROTECTION OFFER WITH MESSAGE ---
+  if (finalOffer.type === "protection") {
+      const message = await buildProtectionMessage(
+          persona,
+          userTags,
+          finalOffer.protection.protection,
+          finalOffer.protection.tags
+      );
+      finalOffer = { ...finalOffer, message };
+  }
 
   let bestCarOffer: CarUpgradeOffer | undefined;
 
@@ -621,19 +676,20 @@ export async function getRecommendationsForBooking(
 
     // Find best candidate that:
     // 1. Is NOT the fromVehicle
-    // 2. Costs strictly MORE than the fromVehicle
-    // 3. Has a better score (implicit if we pick from top of sorted list)
+    // 2. Costs strictly MORE than the fromVehicle (unless we allow same-price better fit)
+    // 3. Has a better score
     const toScored = scoredVehicles.find((sv) => {
       if (sv.vehicle.id === fromVehicle.id) return false;
       
       const toPrice = (sv.vehicle as any).price || (sv.vehicle as any).pricePerDay || 0;
       
-      // Enforce strict price upgrade
-      // The user explicitly requested "it should just cost more" rather than strict category ranking
+      // Only recommend upgrades that are more expensive (upsell)
       if (toPrice <= fromPrice) return false;
 
-      // Ensure it's actually a better match/score
-      return sv.totalScore > fromScored!.totalScore;
+      // We want the BEST scored car that is an upgrade.
+      // Since scoredVehicles is already sorted by score (descending),
+      // the first one we find that meets the criteria is the best one.
+      return sv.totalScore > fromScored!.totalScore + 0.1; // Require slightly better score
     });
 
     if (toScored) {
@@ -660,7 +716,7 @@ export async function getRecommendationsForBooking(
         toTags,
         message,
         score: toScored.totalScore,
-        priceDifference: toPrice - fromPrice, // <--- Calculate difference here
+        priceDifference: Number((toPrice - fromPrice).toFixed(2)),
       };
     }
   }
@@ -675,6 +731,7 @@ export async function getRecommendationsForBooking(
     protectionCandidates: scoredProtections,
     primaryOfferType,
     bestCarOffer,
+    currentVehicle: fromScored?.vehicle,
     finalOffer,
   };
 }
