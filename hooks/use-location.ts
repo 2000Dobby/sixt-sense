@@ -35,4 +35,3 @@ export function useLocation() {
 
     return { userLocation, errorMsg };
 }
-

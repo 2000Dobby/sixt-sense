@@ -67,4 +67,3 @@ export function useDeviceOrientation() {
 
   return { orientation, error, permissionState, requestPermission };
 }
-

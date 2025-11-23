@@ -4,14 +4,14 @@ import { Car } from "@/types";
 import dynamic from 'next/dynamic';
 import { getDistance } from 'geolib';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useLocation } from '@/app/navigation/_hooks/use-location';
-import { useDeviceOrientation } from '@/app/navigation/_hooks/use-device-orientation';
-import type { Waypoint } from '@/app/navigation/_components/minimap';
+import { useLocation } from '@/hooks/use-location';
+import { useDeviceOrientation } from '@/hooks/use-device-orientation';
+import type { Waypoint } from '@/app/components/Minimap';
 import { useBooking } from "@/context/BookingContext";
 
 // Dynamic import for the map to avoid SSR issues with Leaflet
 const ParkingNavigator = dynamic(
-    () => import('@/app/navigation/_components/minimap'),
+    () => import('@/app/components/Minimap'),
     {
         ssr: false,
         loading: () => (
@@ -27,7 +27,6 @@ interface NavigationProps {
 }
 
 export default function Navigation({ car }: NavigationProps) {
-    // --- Logic from app/navigation/page.tsx ---
     const [isMapLoaded, setIsMapLoaded] = useState(false);
     const [isNearCar, setIsNearCar] = useState(false);
     const hasNotifiedRef = useRef(false);
