@@ -68,7 +68,7 @@ export default function VehicleSelection({
             </div>
 
             {/* Upgrade Card */}
-            <div className="flex-1 bg-linear-to-br from-zinc-900 to-zinc-950 rounded-2xl p-5 border border-sixt-orange/30 shadow-lg relative overflow-hidden flex flex-col min-h-0">
+            <div className="flex-1 bg-gradient-to-br from-zinc-900 to-zinc-950 rounded-2xl p-5 border border-sixt-orange/30 shadow-lg relative overflow-y-auto overflow-x-hidden flex flex-col min-h-0">
                 <div className="absolute top-0 right-0 bg-sixt-orange text-black text-[10px] font-bold px-3 py-1 rounded-bl-xl z-20 tracking-widest">
                     UPGRADE
                 </div>

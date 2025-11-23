@@ -35,7 +35,7 @@ export default function ActionPopup() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={closePopup}
+                        onClick={!isUnlock ? closePopup : undefined}
                         className="fixed inset-0 bg-black/80 z-[1000] backdrop-blur-sm"
                     />
                     <motion.div
@@ -57,12 +57,14 @@ export default function ActionPopup() {
                                     {car.category}
                                 </p>
                             </div>
-                            <button 
-                                onClick={closePopup}
-                                className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
-                            >
-                                <X className="text-white w-6 h-6" />
-                            </button>
+                            {!isUnlock && (
+                                <button 
+                                    onClick={closePopup}
+                                    className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+                                >
+                                    <X className="text-white w-6 h-6" />
+                                </button>
+                            )}
                         </div>
 
                         {isUpgrade && (
@@ -80,7 +82,7 @@ export default function ActionPopup() {
                                     src={car.image} 
                                     alt={car.model}
                                     fill
-                                    className="object-contain p-4 relative z-10 scale-[1.75]"
+                                    className="object-contain p-4 relative z-10 scale-[1.7]"
                                 />
                             )}
                         </div>

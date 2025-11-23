@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Check, Car } from "lucide-react";
+import { Check, Car, LucideIcon } from "lucide-react";
 import CircularTimer from "./misc/CircularTimer";
 
 interface SuccessScreenProps {
@@ -7,9 +7,10 @@ interface SuccessScreenProps {
     subtitle?: string;
     duration: number;
     onComplete: () => void;
+    icon?: LucideIcon;
 }
 
-export default function SuccessScreen({ title, subtitle, duration, onComplete }: SuccessScreenProps) {
+export default function SuccessScreen({ title, subtitle, duration, onComplete, icon: Icon = Car }: SuccessScreenProps) {
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -29,7 +30,7 @@ export default function SuccessScreen({ title, subtitle, duration, onComplete }:
                     }}
                     className="w-32 h-32 bg-sixt-orange rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(255,95,0,0.4)]"
                 >
-                    <Car className="w-16 h-16 text-white" />
+                    <Icon className="w-16 h-16 text-white" />
                 </motion.div>
                 <motion.div
                     initial={{ scale: 0, opacity: 0 }}
