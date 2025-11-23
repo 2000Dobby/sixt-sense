@@ -83,13 +83,19 @@ export function BookingProvider({ children }: { children: ReactNode }) {
                 ? await mockApi.postUpgrade(state.availableOffer.id)
                 : await api.postUpgrade(state.bookingId || "987654321", state.availableOffer.id);
 
-            if (success && state.availableOffer.car) {
+            if (success) {
+                const isCarUpgrade = !!state.availableOffer.car;
+                const successMessage = isCarUpgrade 
+                    ? "You have successfully upgraded to a better car" 
+                    : "Protection successfully upgraded";
+
                 setState(prev => ({
                     ...prev,
-                    assignedCar: state.availableOffer!.car!, // Assign the upgrade car
+                    assignedCar: isCarUpgrade ? state.availableOffer!.car! : prev.assignedCar,
                     isLoading: false,
                     step: 6, // Move to Upgrade Success Step
-                    hasUpgraded: true
+                    hasUpgraded: true,
+                    successMessage
                 }));
             }
         } catch (error) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence } from "framer-motion";
+import { Shield, Car } from "lucide-react";
 import Header from "./components/misc/Header";
 import VehicleSelection from "./components/VehicleSelection";
 import Navigation from "./components/Navigation";
@@ -40,9 +41,10 @@ export default function Home() {
             {step === 6 && (
                 <SuccessScreen 
                     key="upgrade-success"
-                    title="You have successfully upgraded to a better car"
+                    title={successMessage || "You have successfully upgraded to a better car"}
                     duration={3000}
                     onComplete={() => setStep(3)}
+                    icon={availableOffer?.type === 'PROTECTION' ? Shield : Car}
                 />
             )}
 
