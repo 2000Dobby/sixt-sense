@@ -41,8 +41,8 @@ export default function Navigation({ car }: NavigationProps) {
     const [waypointsState, setWaypointsState] = useState<Waypoint[]>([
         {
             id: 'wp-1',
-            lat: 48.26241703605156, 
-            lng: 11.66895221734899,
+            lat: 48.26252354333829,
+            lng: 11.668242078994648,
             label: 'MI Exit',
             proximityRadius: 15,
         },
