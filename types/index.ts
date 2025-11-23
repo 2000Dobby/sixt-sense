@@ -15,6 +15,7 @@ export interface UpgradeOffer {
     type: OfferType;
     title: string;
     description: string;
+    subtitle?: string;
     price: number; // Daily price
     car?: Car; // If it's a car upgrade
     benefits: string[];

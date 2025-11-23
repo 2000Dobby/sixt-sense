@@ -1,42 +1,49 @@
 import { Car, UpgradeOffer } from "@/types";
 
 const MOCK_BOOKED_CAR: Car = {
-    id: "c1",
-    model: "BMW 3 Series",
-    licensePlate: "M-XY 1234",
-    image: "/cars/bmw3.png",
-    category: "Sedan",
-    features: ["Bluetooth", "Navigation", "Heated Seats"],
+    id: "1a1257a0-e495-43ff-b213-9786338e159b",
+    model: "VOLKSWAGEN GOLF",
+    licensePlate: "M-XY 7890",
+    image: "https://vehicle-pictures-prod.orange.sixt.com/143707/9d9d9c/18_1.png",
+    category: "SEDAN",
+    features: ["Automatic", "5 Seats", "Petrol"],
     spot: "Spot: #123"
 };
 
 const MOCK_UPGRADE_CAR: Car = {
-    id: "c2",
-    model: "BMW 5 Series",
-    licensePlate: "M-AB 9876",
-    image: "/cars/bmw5.png",
-    category: "Luxury Class",
-    features: ["More legroom & comfort", "Premium sound system", "Heads-up display included"],
+    id: "afc8d944-b855-4a80-bace-360c43e08411",
+    model: "SKODA ENYAQ",
+    licensePlate: "M-AB 4567",
+    image: "https://vehicle-pictures-prod.orange.sixt.com/142547/ffffff/18_1.png",
+    category: "SUV",
+    features: ["Automatic", "5 Seats", "Electric", "New vehicle", "Built-in navigation"],
     spot: "Spot: #423"
 };
 
 const MOCK_OFFER_CAR: UpgradeOffer = {
     id: "o1",
     type: "CAR_UPGRADE",
-    title: "Vehicle Upgrade",
-    description: "Upgrade to Luxury Class",
+    title: "Special offer",
+    description: "Upgrade to Skoda Enyaq",
     price: 15,
     car: MOCK_UPGRADE_CAR,
-    benefits: ["More legroom", "Premium Sound", "Heads-up Display"]
+    benefits: ["Electric", "Built-in navigation", "New vehicle"]
 };
 
 const MOCK_OFFER_PROTECTION: UpgradeOffer = {
-    id: "o2",
+    id: "1002182",
     type: "PROTECTION",
-    title: "Peace of Mind",
-    description: "Full Protection Package",
-    price: 10,
-    benefits: ["0€ Deductible", "Tire & Glass Protection", "Personal Accident Protection"]
+    title: "Special offer",
+    description: "Peace of Mind Protection",
+    subtitle: "Travel with total confidence. The Peace of Mind package gives you full protection for both your rental vehicle and everyone inside it, so you can focus entirely on enjoying the journey. With $0 deductible, comprehensive coverage, and extended support, it’s the easiest way to stay protected on the road.",
+    price: 69.32,
+    benefits: [
+        "Loss Damage Waiver",
+        "Supplemental Liability Insurance",
+        "Personal Property Coverage",
+        "Personal Accident Coverage",
+        "Extended Roadside Protection"
+    ]
 };
 
 export const mockOffers = {

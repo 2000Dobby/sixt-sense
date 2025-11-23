@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Car as CarIcon, ShieldCheck } from "lucide-react";
 import { useBooking } from "@/context/BookingContext";
 import UnlockSlider from "./UnlockSlider";
+import Image from "next/image";
 
 export default function ActionPopup() {
     const { popupState, closePopup, availableOffer, assignedCar, acceptUpgrade, unlockCar, isLoading } = useBooking();
@@ -71,11 +72,17 @@ export default function ActionPopup() {
                             </div>
                         )}
 
-                        {/* Car Image Placeholder */}
-                        <div className="h-32 bg-zinc-800/50 rounded-xl flex items-center justify-center mb-6 relative overflow-hidden border border-white/5">
-                            <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/50 to-transparent flex items-center justify-center">
-                                <CarIcon className="w-20 h-20 text-zinc-600" />
-                            </div>
+                        {/* Car Image */}
+                        <div className="h-40 bg-zinc-800/50 rounded-xl flex items-center justify-center mb-6 relative overflow-hidden border border-white/5">
+                            <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/50 to-transparent" />
+                            {car.image && (
+                                <Image 
+                                    src={car.image} 
+                                    alt={car.model}
+                                    fill
+                                    className="object-contain p-4 relative z-10 scale-[1.75]"
+                                />
+                            )}
                         </div>
 
                         {/* Benefits List (Upgrade Only) */}

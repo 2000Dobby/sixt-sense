@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Car as CarIcon, ShieldCheck, ArrowRight, Shield } from "lucide-react";
+import Image from "next/image";
 import { Car, UpgradeOffer } from "@/types";
 import UnlockSlider from "./misc/UnlockSlider";
 import { useBooking } from "@/context/BookingContext";
@@ -45,12 +46,14 @@ export default function VehicleSelection({
                         <div className="text-xs text-zinc-500">{distance} away</div>
                     </div>
                 </div>
-                <div className="h-24 bg-zinc-800 rounded-xl flex items-center justify-center mb-2 overflow-hidden relative">
-                        {/* Placeholder for Car Image */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
-                        <CarIcon className="w-16 h-16 text-zinc-700" />
-                        </div>
-                        <span className="relative z-10 text-xs text-zinc-500">Vehicle Image</span>
+                <div className="h-32 bg-zinc-800 rounded-xl flex items-center justify-center mb-2 overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
+                    <Image 
+                        src={currentCar.image} 
+                        alt={currentCar.model}
+                        fill
+                        className="object-contain p-2 relative z-10 scale-[1.75]"
+                    />
                 </div>
             </div>
 
@@ -67,7 +70,7 @@ export default function VehicleSelection({
                             {hasCar ? offer.car?.model : offer.description}
                         </h2>
                         <p className="text-zinc-400 text-sm">
-                            {hasCar ? offer.car?.category : "Full Coverage"}
+                            {hasCar ? offer.car?.category : offer.subtitle}
                         </p>
                     </div>
                     
@@ -83,9 +86,15 @@ export default function VehicleSelection({
                 {/* Dynamic Content Area */}
                 {hasCar && (
                     <div className="flex-1 min-h-0 flex items-center justify-center my-2 relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/50 to-transparent rounded-xl flex items-center justify-center">
-                            <CarIcon className="w-24 h-24 text-zinc-600" />
-                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/50 to-transparent rounded-xl" />
+                        {offer.car?.image && (
+                            <Image 
+                                src={offer.car.image} 
+                                alt={offer.car.model}
+                                fill
+                                className="object-contain p-4 relative z-10 scale-[1.75]"
+                            />
+                        )}
                     </div>
                 )}
 
