@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from '@/app/navigation/_hooks/use-location';
 import { useDeviceOrientation } from '@/app/navigation/_hooks/use-device-orientation';
 import type { Waypoint } from '@/app/navigation/_components/minimap';
+import { useBooking } from "@/context/BookingContext";
 
 // Dynamic import for the map to avoid SSR issues with Leaflet
 const ParkingNavigator = dynamic(
@@ -35,6 +36,7 @@ export default function Navigation({ car }: NavigationProps) {
     const targetPosition = { lat: 48.26324772948778, lng: 11.666841151725487 };
     const { userLocation, errorMsg } = useLocation();
     const { orientation: heading, requestPermission, permissionState } = useDeviceOrientation();
+    const { openPopup } = useBooking();
 
     // Waypoints state
     const [waypointsState, setWaypointsState] = useState<Waypoint[]>([
@@ -100,6 +102,7 @@ export default function Navigation({ car }: NavigationProps) {
                 // If it's the final target (car)
                 if (!nextWaypoint) {
                      queueMicrotask(() => setIsNearCar(true));
+                     openPopup('UNLOCK');
                      window.dispatchEvent(new CustomEvent('carProximityReached', { 
                         detail: { distance, location: userLocation } 
                     }));
@@ -108,13 +111,17 @@ export default function Navigation({ car }: NavigationProps) {
         } else if (distance !== null && distance > PROXIMITY_THRESHOLD + 5) {
              hasNotifiedRef.current = false;
         }
-    }, [distance, userLocation, nextWaypoint]);
+    }, [distance, userLocation, nextWaypoint, openPopup]);
 
     // Handle waypoint reached
     const handleWaypointReached = (reachedWaypoint: Waypoint) => {
         setWaypointsState(prev => prev.map(wp => 
             wp.id === reachedWaypoint.id ? { ...wp, isReached: true } : wp
         ));
+
+        if (reachedWaypoint.isHiddenPOI && reachedWaypoint.poiType === 'car-upgrade') {
+            openPopup('UPGRADE');
+        }
     };
 
     // --- UI Logic ---
@@ -262,6 +269,7 @@ export default function Navigation({ car }: NavigationProps) {
                     isNearCar={isNearCar}
                     waypoints={waypointsState}
                     onWaypointReached={handleWaypointReached}
+                    onHiddenPOIDiscovered={handleWaypointReached}
                 />
                 
                 {!isMapLoaded && (
