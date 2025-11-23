@@ -52,13 +52,13 @@ export default function VehicleSelection({
                         src={currentCar.image} 
                         alt={currentCar.model}
                         fill
-                        className="object-contain p-2 relative z-10 scale-[1.75]"
+                        className="object-contain p-2 relative z-10 scale-[1.7]"
                     />
                 </div>
             </div>
 
             {/* Upgrade Card */}
-            <div className="flex-1 bg-gradient-to-br from-zinc-900 to-zinc-950 rounded-2xl p-5 border border-sixt-orange/30 shadow-lg relative overflow-hidden flex flex-col min-h-0">
+            <div className="flex-1 bg-gradient-to-br from-zinc-900 to-zinc-950 rounded-2xl p-5 border border-sixt-orange/30 shadow-lg relative overflow-y-auto overflow-x-hidden flex flex-col min-h-0">
                 <div className="absolute top-0 right-0 bg-sixt-orange text-black text-[10px] font-bold px-3 py-1 rounded-bl-xl z-20 tracking-widest">
                     UPGRADE
                 </div>
@@ -85,14 +85,14 @@ export default function VehicleSelection({
 
                 {/* Dynamic Content Area */}
                 {hasCar && (
-                    <div className="flex-1 min-h-0 flex items-center justify-center my-2 relative">
+                    <div className="shrink-0 h-48 flex items-center justify-center my-2 relative">
                         <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/50 to-transparent rounded-xl" />
                         {offer.car?.image && (
                             <Image 
                                 src={offer.car.image} 
                                 alt={offer.car.model}
                                 fill
-                                className="object-contain p-4 relative z-10 scale-[1.75]"
+                                className="object-contain p-4 relative z-10 scale-[1.7]"
                             />
                         )}
                     </div>

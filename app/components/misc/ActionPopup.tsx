@@ -82,7 +82,7 @@ export default function ActionPopup() {
                                     src={car.image} 
                                     alt={car.model}
                                     fill
-                                    className="object-contain p-4 relative z-10 scale-[1.75]"
+                                    className="object-contain p-4 relative z-10 scale-[1.7]"
                                 />
                             )}
                         </div>
