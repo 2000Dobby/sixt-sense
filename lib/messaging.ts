@@ -1,6 +1,6 @@
 import type { Persona, UserTag } from "@/lib/personas";
-import type { Vehicle } from "@/lib/sixtApi";
-import type { CarTag } from "@/lib/tagging";
+import type { Vehicle, ProtectionPackage } from "@/lib/sixtApi";
+import type { CarTag, ProtectionTag } from "@/lib/tagging";
 import { getGeminiModel } from "@/lib/vertex";
 
 export interface UpsellMessage {
@@ -22,7 +22,16 @@ export interface CarUpgradeOffer {
   toTags: CarTag[];
   message: UpsellMessage;
   score?: number;             // optional, can be wired from ScoredVehicle.totalScore later
-  priceDifference?: number; // <--- Add this field
+  priceDifference?: number;
+}
+
+export interface ProtectionUpgradeOffer {
+  type: "protection_upgrade";
+  protection: ProtectionPackage;
+  tags: ProtectionTag[];
+  message: UpsellMessage;
+  score?: number;
+  priceDifference?: number;
 }
 
 function getVehicleDisplayName(vehicle: Vehicle): string {
@@ -285,6 +294,59 @@ export async function buildCarUpgradeMessage(
 
   return {
     type: "car_upgrade",
+    headline,
+    bullets: trimmedBullets,
+    stat,
+    formalExplanation,
+    llmExplanation,
+  };
+}
+
+// --- 5) Build a protection-upgrade message ---
+
+export async function buildProtectionUpgradeMessage(
+  persona: Persona,
+  userTags: UserTag[],
+  protection: ProtectionPackage,
+  tags: ProtectionTag[]
+): Promise<UpsellMessage> {
+  // Basic Formal Explanation
+  let formalExplanation = "This protection package provides comprehensive coverage for your trip.";
+  if (tags.includes("full_coverage")) {
+    formalExplanation = "Enjoy zero deductible and full peace of mind with complete coverage.";
+  } else if (tags.includes("glass_protection") && tags.includes("tyre_protection")) {
+    formalExplanation = "Protect yourself against common glass and tyre damages.";
+  }
+
+  if (persona.riskAttitude === "risk_averse") {
+    formalExplanation += " It strongly aligns with your preference for safety and minimal risk.";
+  }
+
+  // LLM Refinement (Simplified)
+  let llmExplanation = formalExplanation;
+  // We can skip LLM for protection for now to keep it simple, or replicate the refinement logic if needed.
+  // For demo speed, let's stick to rule-based or simple LLM call if enabled.
+
+  // Headline
+  let headline = "Travel with peace of mind";
+  if (tags.includes("full_coverage")) {
+    headline = "Maximum safety, zero worries";
+  }
+
+  // Bullets
+  const bullets: string[] = [];
+  if (tags.includes("full_coverage")) bullets.push("Zero deductible for damages");
+  if (tags.includes("glass_protection")) bullets.push("Glass and windscreen covered");
+  if (tags.includes("tyre_protection")) bullets.push("Tyres and wheels covered");
+  if (tags.includes("roadside_assistance")) bullets.push("24/7 Roadside assistance included");
+  if (tags.includes("theft_protection")) bullets.push("Theft protection included");
+
+  const trimmedBullets = bullets.slice(0, 3);
+
+  const stat = "Most customers choose to protect their trip against unforeseen costs.";
+
+  return {
+    type: "protection",
     headline,
     bullets: trimmedBullets,
     stat,

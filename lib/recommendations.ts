@@ -1,4 +1,9 @@
-import { buildCarUpgradeMessage, type CarUpgradeOffer } from "@/lib/messaging";
+import { 
+  buildCarUpgradeMessage, 
+  buildProtectionUpgradeMessage,
+  type CarUpgradeOffer, 
+  type ProtectionUpgradeOffer 
+} from "@/lib/messaging";
 import { dataSource } from "@/lib/dataSource.current";
 import { getPersonaForBooking, type Persona, type UserTag } from "@/lib/personas";
 import {
@@ -46,6 +51,7 @@ export interface RecommendationResult {
   protectionCandidates: ScoredProtection[]; // sorted by totalScore desc
   primaryOfferType: PrimaryOfferType;
   bestCarOffer?: CarUpgradeOffer;
+  bestProtectionOffer?: ProtectionUpgradeOffer;
   finalOffer: FinalOffer;
 }
 
@@ -274,7 +280,7 @@ function getPersonaProtectionBias(persona: Persona): number {
 
 // --- 3. Scoring a single vehicle ---
 
-function scoreVehicleForUser(
+export function scoreVehicleForUser(
   persona: Persona,
   userTags: UserTag[],
   vehicle: Vehicle
@@ -359,7 +365,7 @@ function scoreVehicleForUser(
 
 // --- 4. Scoring a single protection package ---
 
-function scoreProtectionForUser(
+export function scoreProtectionForUser(
   persona: Persona,
   userTags: UserTag[],
   protection: ProtectionPackage
@@ -569,6 +575,7 @@ export async function getRecommendationsForBooking(
   );
 
   let bestCarOffer: CarUpgradeOffer | undefined;
+  let bestProtectionOffer: ProtectionUpgradeOffer | undefined;
 
   // Determine "From" Vehicle
   let fromScored: ScoredVehicle | undefined;
@@ -665,6 +672,25 @@ export async function getRecommendationsForBooking(
     }
   }
 
+  // Prepare Best Protection Offer (always compute if available, for UI display)
+  if (bestProtection) {
+    const message = await buildProtectionUpgradeMessage(
+      persona,
+      userTags,
+      bestProtection.protection,
+      bestProtection.tags
+    );
+    
+    bestProtectionOffer = {
+      type: "protection_upgrade",
+      protection: bestProtection.protection,
+      tags: bestProtection.tags,
+      message,
+      score: bestProtection.totalScore,
+      priceDifference: bestProtection.protection.price // Assuming base is 0 or this is total add-on cost
+    };
+  }
+
   // 8. Return result
   return {
     bookingId,
@@ -675,6 +701,7 @@ export async function getRecommendationsForBooking(
     protectionCandidates: scoredProtections,
     primaryOfferType,
     bestCarOffer,
+    bestProtectionOffer,
     finalOffer,
   };
 }

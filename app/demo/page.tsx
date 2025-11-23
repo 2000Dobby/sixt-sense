@@ -28,7 +28,7 @@ export default async function DemoPage({ searchParams }: { searchParams: Promise
 
   // 2. Get recommendations directly on the server
   const recommendations = await getRecommendationsForBooking(bookingId, selectedPersonaId, selectedVehicleId);
-  const { persona, userTags, bestCarOffer, primaryOfferType, finalOffer } = recommendations;
+  const { persona, userTags, bestCarOffer, bestProtectionOffer, primaryOfferType, finalOffer } = recommendations;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-sans">
@@ -115,7 +115,7 @@ export default async function DemoPage({ searchParams }: { searchParams: Promise
         <div className="p-6 bg-slate-50">
             <h2 className="text-gray-500 uppercase text-xs font-bold tracking-wider mb-4">Final Recommendation</h2>
             
-            {finalOffer.type === 'car' && finalOffer.car ? (
+            {finalOffer.type === 'car' ? (
                <div className="border-2 border-green-500 rounded-lg p-4 bg-white">
                   <div className="flex justify-between items-start">
                     <div>
@@ -133,7 +133,7 @@ export default async function DemoPage({ searchParams }: { searchParams: Promise
                     {finalOffer.car.spaceFit > 0 && <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Space Fit</span>}
                   </div>
                </div>
-            ) : finalOffer.type === 'protection' && finalOffer.protection ? (
+            ) : finalOffer.type === 'protection' ? (
                <div className="border-2 border-blue-500 rounded-lg p-4 bg-white">
                   <div className="flex justify-between items-start">
                     <div>
@@ -166,7 +166,7 @@ export default async function DemoPage({ searchParams }: { searchParams: Promise
                 </div>
                 {bestCarOffer.priceDifference && bestCarOffer.priceDifference > 0 && (
                   <span className="bg-green-100 text-green-800 px-2 py-1 rounded font-bold">
-                    +{bestCarOffer.priceDifference} {bestCarOffer.toVehicle.currency} / day
+                    +{bestCarOffer.priceDifference.toFixed(2)} {bestCarOffer.toVehicle.currency} / day
                   </span>
                 )}
               </div>
@@ -199,6 +199,52 @@ export default async function DemoPage({ searchParams }: { searchParams: Promise
           ) : (
             <div className="text-center py-8 text-gray-400">
               No car upgrade suggestion available for this booking.
+            </div>
+          )}
+        </div>
+
+        {/* Protection Offer Section (Detailed) */}
+        <div className="p-6 bg-blue-50 border-t border-blue-100">
+          {bestProtectionOffer ? (
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-4 text-sm text-gray-500">
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-700 font-bold uppercase text-xs tracking-wider">Recommended Protection</span>
+                  <span className="text-gray-900 font-bold">{bestProtectionOffer.protection.name}</span>
+                </div>
+                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded font-bold">
+                  +{bestProtectionOffer.priceDifference?.toFixed(2)} {bestProtectionOffer.protection.currency} / day
+                </span>
+              </div>
+
+              <div className="bg-white border border-blue-200 rounded-lg p-5 shadow-sm">
+                <h3 className="text-xl font-bold text-blue-900 mb-3">
+                  {bestProtectionOffer.message.headline}
+                </h3>
+                
+                <p className="text-gray-700 mb-4 leading-relaxed">
+                  {bestProtectionOffer.message.llmExplanation || bestProtectionOffer.message.formalExplanation}
+                </p>
+
+                <ul className="space-y-2 mb-4">
+                  {bestProtectionOffer.message.bullets.map((bullet, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                      <span className="text-blue-500 mt-1">✓</span>
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+
+                {bestProtectionOffer.message.stat && (
+                  <p className="text-xs text-gray-500 border-t border-blue-100 pt-3 mt-2">
+                    <span className="font-semibold">Did you know?</span> {bestProtectionOffer.message.stat}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-400">
+              No protection suggestion available.
             </div>
           )}
         </div>
